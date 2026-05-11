@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta property="og:title" content="03" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://3mos.piadam.site/" />
+
+    <meta property="og:image" content="https://3mos.piadam.site/assets/vin.png" />
+    <meta property="og:image:secure_url" content="https://3mos.piadam.site/assets/vin.png" />
+    <meta property="og:image:type" content="image/png" />
+
+    <meta property="og:description" content="" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:image" content="https://3mos.piadam.site/assets/vin.png" />
+
+    <title>Happy 5</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Homemade+Apple&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap"
+        rel="stylesheet">
+
+    <script>
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) e.preventDefault();
+            if (e.ctrlKey && (e.key === 'u' || e.key === 's')) e.preventDefault();
+            if (e.ctrlKey && e.key === 'c') e.preventDefault();
+        });
+        document.addEventListener('dragstart', e => e.preventDefault());
+    </script>
+    <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-W3YV5F592G"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-W3YV5F592G', {
+            anonymize_ip: false,
+            allow_ad_personalization_signals: false
+        });
+    </script> -->
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

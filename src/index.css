@@ -1,0 +1,308 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Patrick+Hand&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --doodle-black: #1a1a1a;
+    --doodle-gray: #666666;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Patrick Hand', cursive;
+    background-color: #f5f5f5;
+    background-image:
+        radial-gradient(circle, #ddd 1px, transparent 1px);
+    background-size: 20px 20px;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Doodle border effect */
+.doodle-border {
+    border: 3px solid var(--doodle-black);
+    border-radius: 8px;
+    position: relative;
+    background: white;
+}
+
+.doodle-border::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    right: -6px;
+    bottom: -6px;
+    border: 2px dashed var(--doodle-gray);
+    border-radius: 12px;
+    z-index: -1;
+}
+
+/* Hand-drawn text effect */
+.doodle-text {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+}
+
+/* Shake animation for ragebait */
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0) rotate(0deg);
+    }
+
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+        transform: translateX(-5px) rotate(-2deg);
+    }
+
+    20%,
+    40%,
+    60%,
+    80% {
+        transform: translateX(5px) rotate(2deg);
+    }
+}
+
+.shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+/* Confetti animation */
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(-100vh) rotate(0deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+.confetti {
+    position: fixed;
+    width: 15px;
+    height: 15px;
+    top: -20px;
+    animation: confetti-fall 3s linear forwards;
+    z-index: 1000;
+}
+
+/* Heart beat animation */
+@keyframes heartbeat {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.heartbeat {
+    animation: heartbeat 1s ease-in-out infinite;
+}
+
+/* Bounce animation */
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.bounce {
+    animation: bounce 0.6s ease-in-out infinite;
+}
+
+/* Wobble animation */
+@keyframes wobble {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        transform: rotate(-5deg);
+    }
+
+    75% {
+        transform: rotate(5deg);
+    }
+}
+
+.wobble {
+    animation: wobble 0.5s ease-in-out;
+}
+
+/* Dragging cursor */
+.draggable {
+    cursor: grab;
+}
+
+.draggable:active {
+    cursor: grabbing;
+}
+
+/* Pulse animation */
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+.pulse {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Slide up animation */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-up {
+    animation: slideUp 0.6s ease-out forwards;
+}
+
+/* Doodle background pattern */
+.doodle-bg {
+    background:
+        repeating-linear-gradient(45deg,
+            transparent,
+            transparent 10px,
+            rgba(0, 0, 0, 0.03) 10px,
+            rgba(0, 0, 0, 0.03) 20px),
+        white;
+}
+
+/* Sketchy underline */
+.underline-sketch {
+    position: relative;
+    display: inline-block;
+}
+
+.underline-sketch::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--doodle-black);
+    border-radius: 2px;
+    transform: rotate(-1deg);
+}
+
+/* Angry animation */
+@keyframes angry {
+
+    0%,
+    100% {
+        transform: scale(1) translateX(0);
+    }
+
+    25% {
+        transform: scale(1.1) translateX(-5px);
+    }
+
+    75% {
+        transform: scale(1.1) translateX(5px);
+    }
+}
+
+.angry {
+    animation: angry 0.3s ease-in-out;
+}
+
+/* Heart dodge animation */
+@keyframes dodge-left {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    50% {
+        transform: translateX(-30px) rotate(-20deg);
+    }
+}
+
+@keyframes dodge-right {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    50% {
+        transform: translateX(30px) rotate(20deg);
+    }
+}
+
+.dodge-left {
+    animation: dodge-left 0.3s ease-in-out;
+}
+
+.dodge-right {
+    animation: dodge-right 0.3s ease-in-out;
+}
+
+/* Input error styling */
+.input-error {
+    border-color: #ff0000 !important;
+    background-color: #fff0f0 !important;
+}
