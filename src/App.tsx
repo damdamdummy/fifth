@@ -321,7 +321,7 @@ const Game1 = ({ onComplete }: { onComplete: () => void }) => {
                             onChange={handleInput}
                             placeholder="Ketik di sini..."
                             className={`w-full p-4 text-xl border-3 border-gray-800 rounded-lg text-center ${shake ? 'shake input-error' : ''}`}
-                            autoFocus
+
                         />
 
                         <p className="text-sm text-center mt-4 text-gray-500">
@@ -657,8 +657,7 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
                     </>
                 ) : (
                     <div className="text-center py-8 fade-in">
-                        <p className="text-2xl mb-4">Hehe 🤍💕</p>
-                        <p className="text-xl text-gray-500 mt-2">hatiku untukmu, hatimu untukku…</p>
+                        <p className="text-base text-gray-500 mt-2">untukmu hatiku, untukku hatimu heheh 💕 </p>
 
                     </div>
                 )}
@@ -682,19 +681,11 @@ const FinalMessage = () => {
 
                 <div className="space-y-4 text-xl text-gray-700">
                     <p className="text-center">
-                        Selamat tanggal 12
+                        Selamat tanggal 12.
+                        <br />
+                        Semoga yang kita jaga dalam hati, dijaga semesta juga.
                     </p>
-                    <p className="text-center">
-                        Maaf kalau yang kubikin kali ini tidak sesuai harapan hahah
-                    </p>
-
-                    <p className="text-center text-sm font-bold">
-                        Dan lanjutannya...
-                    </p>
-
-                    <p className="text-center text-2xl bounce">
-                        di chat aja yaaa emuahh
-                    </p>
+                    <br />
                 </div>
 
             </div>
