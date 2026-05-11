@@ -200,7 +200,7 @@ const IntroPopup = ({ onStart }: { onStart: () => void }) => {
             <div className="doodle-border p-8 max-w-sm w-full slide-up doodle-bg">
                 <div className="text-center">
                     <p className="text-4xl mb-6 doodle-text text-gray-800 wobble">
-                        Oii Sophia
+                        Halo Sophia
                     </p>
 
                     {!showOptions ?
@@ -216,11 +216,12 @@ const IntroPopup = ({ onStart }: { onStart: () => void }) => {
 
                         (
                             <div className="space-y-4 fade-in">
-                                <p className="text-base text-gray-600">ada sesuatu untuk kamu...</p>
+                                {/* <p className="text-base text-gray-600">ada sesuatu untuk kamu...</p> */}
                                 <img src="assets/cat5.gif" alt="" width="20%" className="mx-auto" />
+                                <br />
                                 <button
                                     onClick={handleStart}
-                                    className="doodle-border px-4 py-2 text-base bg-white hover:bg-gray-200 transition-all duration-500 heartbeat"
+                                    className="doodle-border px-4 py-1 text-base bg-white hover:bg-gray-200 transition-all duration-500 heartbeat"
                                 >
                                     sini yang 👆
                                 </button>
@@ -656,7 +657,7 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
                     </>
                 ) : (
                     <div className="text-center py-8 fade-in">
-                        <p className="text-5xl mb-4">Hehe 🤍💕</p>
+                        <p className="text-2xl mb-4">Hehe 🤍💕</p>
                         <p className="text-xl text-gray-500 mt-2">hatiku untukmu, hatimu untukku…</p>
 
                     </div>
@@ -691,7 +692,7 @@ const FinalMessage = () => {
                         Dan lanjutannya...
                     </p>
 
-                    <p className="text-center text-2xl pulse">
+                    <p className="text-center text-2xl bounce">
                         di chat aja yaaa emuahh
                     </p>
                 </div>
@@ -723,7 +724,10 @@ function App() {
     };
 
     return (
-        <div className="min-h-screen">
+        <div className="app-shell">
+            <style>{`
+                    .app-shell { position: fixed; top: 0; left: 0; right: 0; bottom: 0; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+                `}</style>
             {gameState === 'intro' && (
                 <IntroPopup onStart={startGame} />
             )}
