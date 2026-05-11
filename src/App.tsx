@@ -2,6 +2,73 @@ import { useState, useRef, useEffect } from 'react';
 
 type GameState = 'intro' | 'game1' | 'game2' | 'complete';
 
+let bgAudioContext: AudioContext | null = null;
+let bgLoopTimeout: ReturnType<typeof setTimeout> | null = null;
+let bgPlaying = false;
+
+const playBackgroundMusic = () => {
+    if (bgPlaying) return;
+    bgPlaying = true;
+
+    const notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63, 293.66, 261.63];
+    const noteDuration = 0.55;
+    const loopDuration = notes.length * noteDuration * 1000;
+
+    const playLoop = () => {
+        if (!bgPlaying) return;
+        try {
+            const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            bgAudioContext = ctx;
+
+
+            const masterGain = ctx.createGain();
+            masterGain.connect(ctx.destination);
+            masterGain.gain.setValueAtTime(0, ctx.currentTime);
+            masterGain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 0.3);
+
+            notes.forEach((freq, i) => {
+                const startTime = ctx.currentTime + i * noteDuration;
+
+
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(masterGain);
+                osc.frequency.setValueAtTime(freq, startTime);
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0, startTime);
+                gain.gain.linearRampToValueAtTime(0.6, startTime + 0.04);
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + noteDuration * 0.85);
+                osc.start(startTime);
+                osc.stop(startTime + noteDuration);
+
+
+                const harmOsc = ctx.createOscillator();
+                const harmGain = ctx.createGain();
+                harmOsc.connect(harmGain);
+                harmGain.connect(masterGain);
+                harmOsc.frequency.setValueAtTime(freq / 2, startTime);
+                harmOsc.type = 'triangle';
+                harmGain.gain.setValueAtTime(0, startTime);
+                harmGain.gain.linearRampToValueAtTime(0.2, startTime + 0.04);
+                harmGain.gain.exponentialRampToValueAtTime(0.01, startTime + noteDuration * 0.7);
+                harmOsc.start(startTime);
+                harmOsc.stop(startTime + noteDuration);
+            });
+
+
+            bgLoopTimeout = setTimeout(() => {
+                try { ctx.close(); } catch (e) { }
+                playLoop();
+            }, loopDuration - 100);
+        } catch (e) {
+            console.log('Audio not available');
+        }
+    };
+
+    playLoop();
+};
+
 const playSound = (type: 'start' | 'error' | 'success') => {
     try {
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -39,6 +106,32 @@ const playSound = (type: 'start' | 'error' | 'success') => {
     } catch (e) {
         console.log('Audio not available');
     }
+};
+
+
+const ProgressBar = ({ currentStep }: { currentStep: number }) => {
+    const totalSteps = 2;
+
+    return (
+        <div className="flex items-center justify-center gap-2 mb-6">
+            {[1, 2].map((step) => (
+                <div key={step} className="flex items-center">
+                    <div
+                        className={`step-dot w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold border-2 transition-all duration-300 ${step <= currentStep
+                            ? 'bg-yellow-500 border-yellow-500 text-white scale-110'
+                            : 'bg-white border-gray-300 text-gray-400'
+                            }`}
+                        id={`dot${step}`}
+                    >
+                        {step}
+                    </div>
+                    {step < totalSteps && (
+                        <div className={`w-8 h-0.5 mx-1 ${step < currentStep ? 'bg-yellow-500' : 'bg-gray-300'}`}></div>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
 };
 
 const AngryEmojis = ({ show }: { show: boolean }) => {
@@ -96,6 +189,12 @@ const IntroPopup = ({ onStart }: { onStart: () => void }) => {
         setShowOptions(true);
     };
 
+    const handleStart = () => {
+        playSound('start');
+        playBackgroundMusic(); // Play background music after clicking "oke sayangku"
+        onStart();
+    };
+
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="doodle-border p-8 max-w-sm w-full slide-up doodle-bg">
@@ -115,7 +214,7 @@ const IntroPopup = ({ onStart }: { onStart: () => void }) => {
                         <div className="space-y-4 fade-in">
                             <p className="text-xl text-gray-600">Ada game untuk kamu...</p>
                             <button
-                                onClick={onStart}
+                                onClick={handleStart}
                                 className="doodle-border px-8 py-4 text-2xl bg-white hover:bg-gray-100 transition-all duration-200 bounce heartbeat"
                             >
                                 oke sayangku 💕
@@ -177,17 +276,18 @@ const Game1 = ({ onComplete }: { onComplete: () => void }) => {
             {showSuccess && <Confetti />}
 
             <div className="doodle-border p-6 max-w-md w-full slide-up">
+                <ProgressBar currentStep={1} />
+
                 <h2 className="text-3xl text-center mb-2 doodle-text">
-                    Game 1 😒
+                    Janji Suci 😂
                 </h2>
-                <p className="text-xl text-center mb-6 text-gray-600">
-                    "Type This Please"
-                </p>
+
+                <br />
 
                 {!showSuccess ? (
                     <>
                         <p className="text-lg text-center mb-4 text-gray-700">
-                            Ayo ketik ulang kalimat di bawah ini. Persis. Ga boleh Salah:
+                            Ayo ketik ulang kalimat di bawah ini:
                         </p>
 
                         <div className="bg-gray-100 p-4 rounded-lg mb-4 text-center">
@@ -217,192 +317,267 @@ const Game1 = ({ onComplete }: { onComplete: () => void }) => {
                 )}
             </div>
 
-            {/* Decorative elements */}
-            <div className="absolute top-10 left-10 text-6xl opacity-30 wobble">✏️</div>
-            <div className="absolute bottom-10 right-10 text-6xl opacity-30 wobble" style={{ animationDelay: '0.5s' }}>📝</div>
+
+            <div className="absolute top-10 left-10 text-6xl opacity-100 wobble">✏️</div>
+            <div className="absolute bottom-10 right-10 text-6xl opacity-100 wobble" style={{ animationDelay: '0.5s' }}>📝</div>
         </div>
     );
 };
 
-// Game 2: Drag the Heart
+// Game 2: Slide the Heart — knob slider from Sophia to Adam
 const Game2 = ({ onComplete }: { onComplete: () => void }) => {
-    const [hearts, setHearts] = useState([
-        { id: 1, color: 'white', x: 0, y: 0, placed: false },
-        { id: 2, color: 'black', x: 0, y: 0, placed: false },
-    ]);
-    const [adamHearts, setAdamHearts] = useState(0);
-    const [sophiaHearts, setSophiaHearts] = useState(2);
-    const [dragging, setDragging] = useState<number | null>(null);
-    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const railRef = useRef<HTMLDivElement>(null);
+    const knobRef = useRef<HTMLDivElement>(null);
+
+    const [pct, setPct] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const [heartDropped, setHeartDropped] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
-    const [dodgeDirection, setDodgeDirection] = useState<'left' | 'right' | null>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
+    const [hint, setHint] = useState('🖤 Geser yang…');
+    const [ngelak, setNgelak] = useState(false);
+    const [showAngryNgelak, setShowAngryNgelak] = useState(false);
 
-    const handleDragStart = (e: React.MouseEvent | React.TouchEvent, heartId: number) => {
-        const heart = hearts.find(h => h.id === heartId);
-        if (!heart || heart.color === 'white' || heart.placed) return;
+    const prevPctRef = useRef(0);
+    const ngelakCooldownRef = useRef(false);
+    const pctRef = useRef(0);
+    const draggingRef = useRef(false);
+    const heartDroppedRef = useRef(false);
 
-        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    // Keep refs in sync
+    useEffect(() => { pctRef.current = pct; }, [pct]);
+    useEffect(() => { draggingRef.current = isDragging; }, [isDragging]);
+    useEffect(() => { heartDroppedRef.current = heartDropped; }, [heartDropped]);
 
-        setDragging(heartId);
-        setDragStart({ x: clientX, y: clientY });
-    };
+    const clamp = (v: number) => Math.max(0, Math.min(1, v));
 
-    const handleDragMove = (e: React.MouseEvent | React.TouchEvent) => {
-        if (dragging === null) return;
+    const applyPct = (rawPct: number) => {
+        if (heartDroppedRef.current) return;
+        const newPct = clamp(rawPct);
 
-        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-
-        const deltaX = clientX - dragStart.x;
-        const deltaY = clientY - dragStart.y;
-
-        // Ragebait: if dragged too fast (large delta), heart dodges!
-        if (Math.abs(deltaX) > 100 || Math.abs(deltaY) > 100) {
-            setDodgeDirection(deltaX > 0 ? 'right' : 'left');
+        // Ngelak check: too fast
+        const speed = Math.abs(newPct - prevPctRef.current);
+        if (speed > 0.07 && !ngelakCooldownRef.current && newPct < 0.92) {
+            ngelakCooldownRef.current = true;
+            const bouncePct = clamp(newPct - 0.08);
+            setPct(bouncePct);
+            pctRef.current = bouncePct;
+            setHint('😤 Pelan-pelan dong! Jangan kasar!');
+            setNgelak(true);
+            setShowAngryNgelak(true);
             playSound('error');
             setTimeout(() => {
-                setDodgeDirection(null);
-                setDragging(null);
-                setDragStart({ x: 0, y: 0 });
-            }, 300);
+                setNgelak(false);
+                setShowAngryNgelak(false);
+                ngelakCooldownRef.current = false;
+            }, 600);
+            prevPctRef.current = bouncePct;
             return;
         }
 
-        setHearts(prev => prev.map(h =>
-            h.id === dragging ? { ...h, x: deltaX, y: deltaY } : h
-        ));
-    };
+        prevPctRef.current = newPct;
+        setPct(newPct);
 
-    const handleDragEnd = () => {
-        if (dragging === null) return;
+        if (newPct < 0.3) setHint('🖤 geser terus…');
+        else if (newPct < 0.7) setHint('teruskan…');
+        else if (newPct < 0.95) setHint('🥺 hampir sampai…');
 
-        const heart = hearts.find(h => h.id === dragging);
-        if (!heart || heart.color !== 'black') return;
-
-        // Check if dropped on Adam's area (right side of screen)
-        const container = containerRef.current;
-        if (container) {
-            const rect = container.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-
-            // If dropped on right side (Adam's side)
-            if (heart.x > 50) {
-                playSound('success');
-                setShowSuccess(true);
-                setAdamHearts(1);
-                setSophiaHearts(1);
-                setTimeout(() => {
-                    onComplete();
-                }, 2000);
-            } else {
-                // Reset position
-                setHearts(prev => prev.map(h =>
-                    h.id === dragging ? { ...h, x: 0, y: 0 } : h
-                ));
-            }
+        if (newPct >= 1 && !heartDroppedRef.current) {
+            heartDroppedRef.current = true;
+            setHeartDropped(true);
+            setHint('Makasih hatinya~');
+            playSound('success');
+            setShowSuccess(true);
+            setTimeout(() => onComplete(), 1800);
         }
-
-        setDragging(null);
-        setDragStart({ x: 0, y: 0 });
     };
+
+    const getPct = (clientX: number) => {
+        const rail = railRef.current;
+        if (!rail) return 0;
+        const rect = rail.getBoundingClientRect();
+        return (clientX - rect.left) / rect.width;
+    };
+
+    // Mouse events
+    const onKnobMouseDown = (e: React.MouseEvent) => {
+        if (heartDropped) return;
+        e.preventDefault();
+        setIsDragging(true);
+    };
+    const onMouseMove = (e: MouseEvent) => {
+        if (!draggingRef.current || heartDroppedRef.current) return;
+        applyPct(getPct(e.clientX));
+    };
+    const onMouseUp = () => setIsDragging(false);
+
+    // Touch events
+    const onKnobTouchStart = (e: React.TouchEvent) => {
+        if (heartDropped) return;
+        e.preventDefault();
+        setIsDragging(true);
+    };
+    const onTouchMove = (e: TouchEvent) => {
+        if (!draggingRef.current || heartDroppedRef.current) return;
+        e.preventDefault();
+        applyPct(getPct(e.touches[0].clientX));
+    };
+    const onTouchEnd = () => setIsDragging(false);
+
+    // Rail click
+    const onRailClick = (e: React.MouseEvent) => {
+        if (heartDropped) return;
+        applyPct(getPct(e.clientX));
+    };
+
+    useEffect(() => {
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+        window.addEventListener('touchmove', onTouchMove, { passive: false });
+        window.addEventListener('touchend', onTouchEnd);
+        return () => {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+            window.removeEventListener('touchmove', onTouchMove);
+            window.removeEventListener('touchend', onTouchEnd);
+        };
+    }, []);
+
+    const knobLeft = `calc(${pct * 100}% - 22px)`;
+    const sophiaOpacity = pct > 0.05 ? 1 - pct * 0.85 : 1;
+    const adamHeartVisible = pct > 0.85;
+    const adamOpacity = adamHeartVisible ? (pct - 0.85) / 0.15 : 0;
 
     return (
-        <div
-            ref={containerRef}
-            className="min-h-screen flex flex-col items-center justify-center p-4"
-            onMouseMove={handleDragMove}
-            onMouseUp={handleDragEnd}
-            onMouseLeave={handleDragEnd}
-            onTouchMove={handleDragMove}
-            onTouchEnd={handleDragEnd}
-        >
-            <AngryEmojis show={dodgeDirection !== null} />
+        <div className="min-h-screen flex flex-col items-center justify-center p-4">
+            <AngryEmojis show={showAngryNgelak} />
             {showSuccess && <Confetti />}
 
             <div className="doodle-border p-6 max-w-lg w-full slide-up">
-                <h2 className="text-3xl text-center mb-2 doodle-text">
-                    Game 2 💕
+                <ProgressBar currentStep={2} />
+
+                <h2 className="text-3xl text-center mb-1 doodle-text">
+                    Minta Hatimu
                 </h2>
-                <p className="text-xl text-center mb-6 text-gray-600">
-                    "Drag the Heart"
+                {/* <p className="text-base text-center mb-1 text-gray-600">
+                  
+                </p> */}
+                <p className="text-sm text-center mb-4 text-gray-400 italic">
+                    Hatiku sudah kukasih. Sekarang… berikan hatimu untukku
                 </p>
 
                 {!showSuccess ? (
                     <>
-                        <p className="text-lg text-center mb-6 text-gray-700">
-                            Hatiku sudah kukasih. Sekarang… berikan hatimu untukku 😤❤️
-                        </p>
-
-                        {/* Images container */}
-                        <div className="flex justify-around items-center mb-8">
+                        {/* Characters */}
+                        <div className="flex justify-around items-end mb-6">
                             {/* Sophia */}
                             <div className="flex flex-col items-center">
-                                <div className="w-24 h-24 bg-gray-200 rounded-full border-4 border-gray-800 flex items-center justify-center text-4xl mb-2">
+                                <div className="w-20 h-20 bg-gray-200 rounded-full border-4 border-gray-800 flex items-center justify-center text-3xl mb-1">
                                     👧
                                 </div>
-                                <p className="text-xl font-bold">Sophia</p>
-                                <p className="text-2xl">
-                                    {Array(sophiaHearts).fill('❤️').join(' ')}
-                                </p>
+                                <p className="font-bold text-gray-800">Sophia</p>
+                                <div
+                                    className="text-3xl mt-1 transition-opacity duration-200"
+                                    style={{ opacity: sophiaOpacity }}
+                                >
+                                    🖤
+                                </div>
                             </div>
-
-                            {/* Arrow */}
-                            <div className="text-4xl bounce">➡️</div>
 
                             {/* Adam */}
                             <div className="flex flex-col items-center">
-                                <div className="w-24 h-24 bg-gray-200 rounded-full border-4 border-gray-800 flex items-center justify-center text-4xl mb-2">
+                                <div
+                                    className={`w-20 h-20 rounded-full border-4 flex items-center justify-center text-3xl mb-1 transition-all duration-300 ${heartDropped ? 'border-yellow-500 bg-yellow-100' : 'border-dashed border-gray-400 bg-gray-100'}`}
+                                >
                                     👦
                                 </div>
-                                <p className="text-xl font-bold">Adam</p>
-                                <p className="text-2xl">
-                                    {Array(adamHearts).fill('❤️').join('')}
-                                    {adamHearts === 0 && <span className="text-gray-400">-_-</span>}
-                                </p>
+                                <p className="font-bold text-gray-800">Adam</p>
+                                <div
+                                    className="text-3xl mt-1 transition-opacity duration-200"
+                                    style={{ opacity: heartDropped ? 1 : adamOpacity }}
+                                >
+                                    {heartDropped ? '🖤' : (adamHeartVisible ? '🖤' : '💔')}
+                                </div>
                             </div>
                         </div>
 
-                        {/* Draggable hearts */}
-                        <div className="flex justify-center gap-8">
-                            {hearts.map(heart => (
+                        {/* Rail + Knob */}
+                        <div className="px-2 mb-4">
+                            <div
+                                ref={railRef}
+                                onClick={onRailClick}
+                                style={{
+                                    position: 'relative',
+                                    height: '14px',
+                                    background: '#e5e7eb',
+                                    borderRadius: '999px',
+                                    border: '2px solid #374151',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                {/* Fill */}
+                                <div style={{
+                                    position: 'absolute',
+                                    left: 0,
+                                    top: 0,
+                                    height: '100%',
+                                    width: `${pct * 100}%`,
+                                    background: 'linear-gradient(90deg, #6b7280, #1f2937)',
+                                    borderRadius: '999px',
+                                    transition: ngelak ? 'none' : 'width 0.05s',
+                                }} />
+
+                                {/* Knob */}
                                 <div
-                                    key={heart.id}
-                                    className={`draggable text-5xl transition-transform ${dodgeDirection ? (dodgeDirection === 'left' ? 'dodge-left' : 'dodge-right') : ''}`}
+                                    ref={knobRef}
+                                    onMouseDown={onKnobMouseDown}
+                                    onTouchStart={onKnobTouchStart}
                                     style={{
-                                        transform: dragging === heart.id ? `translate(${heart.x}px, ${heart.y}px)` : undefined,
-                                        opacity: heart.placed ? 0.3 : 1,
-                                        cursor: heart.color === 'white' || heart.placed ? 'default' : 'grab',
+                                        position: 'absolute',
+                                        top: '50%',
+                                        left: knobLeft,
+                                        transform: 'translateY(-50%)',
+                                        width: '44px',
+                                        height: '44px',
+                                        background: '#1f2937',
+                                        borderRadius: '50%',
+                                        border: '3px solid #fff',
+                                        boxShadow: isDragging ? '0 0 0 3px #6b7280, 0 4px 12px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.3)',
+                                        cursor: heartDropped ? 'default' : (isDragging ? 'grabbing' : 'grab'),
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '22px',
+                                        userSelect: 'none',
+                                        touchAction: 'none',
+                                        transition: ngelak ? 'left 0.15s cubic-bezier(0.34,1.56,0.64,1)' : 'left 0.05s',
+                                        zIndex: 10,
                                     }}
-                                    onMouseDown={(e) => handleDragStart(e, heart.id)}
-                                    onTouchStart={(e) => handleDragStart(e, heart.id)}
                                 >
-                                    {heart.color === 'white' ? '🤍' : '🖤'}
+                                    🖤
                                 </div>
-                            ))}
+                            </div>
+
+                            <div className="flex justify-between text-xs text-gray-400 mt-2 px-1">
+                                <span>Sophia 👧</span>
+                                <span>Adam 👦</span>
+                            </div>
                         </div>
 
-                        <p className="text-center mt-6 text-gray-500 text-sm">
-                            ⚠️ Tarik hati hitam ke arah Adam (kanan)!
+                        {/* Hint */}
+                        <p className="text-center text-sm text-gray-500 min-h-6 transition-all duration-200">
+                            {hint}
                         </p>
                     </>
                 ) : (
                     <div className="text-center py-8 fade-in">
-                        <p className="text-4xl mb-4">💕💕</p>
-                        <p className="text-2xl text-gray-700">
-                            Hatiku buat kamu, hatimu buat aku…
-                        </p>
-                        <p className="text-xl text-gray-500 mt-4">
-                            Loading ucapan akhir...
-                        </p>
+                        <p className="text-5xl mb-4">💕</p>
+                        <p className="text-xl text-gray-500 mt-2">Hatiku buat kamu, hatimu buat aku…</p>
                     </div>
                 )}
             </div>
 
-            {/* Decorative elements */}
-            <div className="absolute top-10 right-10 text-6xl opacity-30 wobble">💖</div>
-            <div className="absolute bottom-10 left-10 text-6xl opacity-30 wobble" style={{ animationDelay: '0.5s' }}>💘</div>
+            {/* <div className="absolute top-10 right-10 text-6xl opacity-30 wobble">💖</div>
+            <div className="absolute bottom-10 left-10 text-6xl opacity-30 wobble" style={{ animationDelay: '0.5s' }}>💘</div> */}
         </div>
     );
 };
@@ -415,48 +590,35 @@ const FinalMessage = () => {
 
             <div className="doodle-border p-8 max-w-md w-full slide-up">
                 <h2 className="text-4xl text-center mb-6 doodle-text">
-                    🎉 Selamat! 🎉
+                    Pimensip Sayang
                 </h2>
 
+                <div className="border-t-2 border-dashed border-gray-400 my-6"></div>
+
                 <div className="space-y-4 text-xl text-gray-700">
-                    <p className="text-center text-2xl font-bold mb-6">
-                        Selamat monthsary ke-5! 🎂
-                    </p>
-
                     <p className="text-center">
-                        Kita emang sempet putus sebulan,
+                        Selamat tanggal 12 lagi ya
                     </p>
-
                     <p className="text-center">
-                        tapi sekarang udah sebulan balikan
+                        Maaf kalau yang kubikin kali ini tidak sesuai harapan hahah
                     </p>
 
-                    <p className="text-center">
-                        dan masih aja ribut lucu tiap hari 😂
-                    </p>
-
-                    <div className="border-t-2 border-dashed border-gray-400 my-6"></div>
-
-                    <p className="text-center text-2xl font-bold">
+                    <p className="text-center text-sm font-bold">
                         Dan lanjutannya...
                     </p>
 
-                    <p className="text-center text-3xl pulse">
-                        di chat aja 💬
+                    <p className="text-center text-2xl pulse">
+                        di chat aja yaaa muahh
                     </p>
                 </div>
 
-                <div className="text-center mt-8">
-                    <p className="text-6xl bounce">💕🤍🖤</p>
-                    <p className="text-xl mt-4 text-gray-600">- Adam buat Sophia -</p>
-                </div>
             </div>
 
             {/* Decorative doodles */}
-            <div className="absolute top-10 left-10 text-6xl opacity-30 wobble">🎈</div>
+            {/* <div className="absolute top-10 left-10 text-6xl opacity-30 wobble">🎈</div>
             <div className="absolute top-10 right-10 text-6xl opacity-30 wobble" style={{ animationDelay: '0.3s' }}>🎁</div>
             <div className="absolute bottom-10 left-10 text-6xl opacity-30 wobble" style={{ animationDelay: '0.6s' }}>🌟</div>
-            <div className="absolute bottom-10 right-10 text-6xl opacity-30 wobble" style={{ animationDelay: '0.9s' }}>💝</div>
+            <div className="absolute bottom-10 right-10 text-6xl opacity-30 wobble" style={{ animationDelay: '0.9s' }}>💝</div> */}
         </div>
     );
 };
