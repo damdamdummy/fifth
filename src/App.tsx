@@ -217,7 +217,7 @@ const IntroPopup = ({ onStart }: { onStart: () => void }) => {
                         (
                             <div className="space-y-4 fade-in">
                                 {/* <p className="text-base text-gray-600">ada sesuatu untuk kamu...</p> */}
-                                <img src="assets/cat5.gif" alt="" width="20%" className="mx-auto" />
+                                <img src="assets/cat5.gif" alt="" width="40%" className="mx-auto" />
                                 <br />
                                 <button
                                     onClick={handleStart}
@@ -298,7 +298,7 @@ const Game1 = ({ onComplete }: { onComplete: () => void }) => {
                 <ProgressBar currentStep={1} />
 
                 <h2 className="text-3xl text-center mb-2 doodle-text">
-                    Janji Suci 😂
+                    Janji Suci 🙏
                 </h2>
 
                 <br />
@@ -421,7 +421,7 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
         setPct(newPct);
 
         if (newPct < 0.3) setHint('ayo yang…');
-        else if (newPct < 0.7) setHint('teruskan…');
+        else if (newPct < 0.7) setHint('geser terus…');
         else if (newPct < 0.95) setHint('🥺 hampir sampai…');
 
         if (newPct >= 1 && !heartDroppedRef.current) {
@@ -717,7 +717,28 @@ function App() {
     return (
         <div className="app-shell">
             <style>{`
-                    .app-shell { position: fixed; top: 0; left: 0; right: 0; bottom: 0; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+            html, body, #root {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+            }
+
+            .app-shell {
+                width: 100%;
+                min-height: 100dvh;
+                height: 100dvh;
+
+                overflow: hidden;
+
+                display: flex;
+                flex-direction: column;
+
+                position: relative;
+
+                background: white;
+            }
                 `}</style>
             {gameState === 'intro' && (
                 <IntroPopup onStart={startGame} />
