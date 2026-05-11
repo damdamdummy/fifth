@@ -213,11 +213,12 @@ const IntroPopup = ({ onStart }: { onStart: () => void }) => {
                     ) : (
                         <div className="space-y-4 fade-in">
                             <p className="text-xl text-gray-600">Ada game untuk kamu...</p>
+                            <img src="assets/cat5.gif" alt="" width="20%" className="mx-auto" />
                             <button
                                 onClick={handleStart}
                                 className="doodle-border px-8 py-4 text-2xl bg-white hover:bg-gray-100 transition-all duration-200 bounce heartbeat"
                             >
-                                oke sayangku 💕
+                                gass?
                             </button>
                         </div>
                     )}
@@ -236,7 +237,7 @@ const Game1 = ({ onComplete }: { onComplete: () => void }) => {
     const [showAngry, setShowAngry] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
 
-    const targetText = 'saya Sophia bersumpah hanya mencintai seorang Adam';
+    const targetText = 'saya Sophia bersumpah hanya mencintai Adam seorang';
     const targetTextLower = targetText.toLowerCase();
 
     const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -292,7 +293,7 @@ const Game1 = ({ onComplete }: { onComplete: () => void }) => {
 
                         <div className="bg-gray-100 p-4 rounded-lg mb-4 text-center">
                             <p className="text-lg font-bold text-gray-800">
-                                "saya Sophia bersumpah hanya mencintai seorang Adam"
+                                "saya Sophia bersumpah hanya mencintai Adam seorang"
                             </p>
                         </div>
 
@@ -312,14 +313,38 @@ const Game1 = ({ onComplete }: { onComplete: () => void }) => {
                 ) : (
                     <div className="text-center py-8 fade-in">
                         <p className="text-4xl mb-4">OK lah😌 lanjut…</p>
-                        <p className="text-2xl text-gray-600">Loading game selanjutnya...</p>
+
                     </div>
                 )}
             </div>
 
 
-            <div className="absolute top-10 left-10 text-6xl opacity-100 wobble">✏️</div>
-            <div className="absolute bottom-10 right-10 text-6xl opacity-100 wobble" style={{ animationDelay: '0.5s' }}>📝</div>
+            <img
+                src="assets/cat1.gif"
+                alt=""
+                className="absolute top-10 left-10 w-14 h-14 opacity-30 wobble"
+            />
+
+            <img
+                src="assets/cat2.gif"
+                alt=""
+                className="absolute bottom-10 right-10 w-14 h-14 opacity-30 wobble"
+                style={{ animationDelay: '0.5s' }}
+            />
+
+            <img
+                src="assets/cat3.gif"
+                alt=""
+                className="absolute top-24 right-32 w-12 h-12 opacity-25 wobble"
+                style={{ animationDelay: '1s' }}
+            />
+
+            <img
+                src="assets/cat4.gif"
+                alt=""
+                className="absolute top-1/2 left-16 w-16 h-16 opacity-20 wobble"
+                style={{ animationDelay: '1.5s' }}
+            />
         </div>
     );
 };
@@ -333,7 +358,7 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [heartDropped, setHeartDropped] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
-    const [hint, setHint] = useState('🖤 Geser yang…');
+    const [hint, setHint] = useState('');
     const [ngelak, setNgelak] = useState(false);
     const [showAngryNgelak, setShowAngryNgelak] = useState(false);
 
@@ -377,14 +402,14 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
         prevPctRef.current = newPct;
         setPct(newPct);
 
-        if (newPct < 0.3) setHint('🖤 geser terus…');
+        if (newPct < 0.3) setHint('ayo yang…');
         else if (newPct < 0.7) setHint('teruskan…');
         else if (newPct < 0.95) setHint('🥺 hampir sampai…');
 
         if (newPct >= 1 && !heartDroppedRef.current) {
             heartDroppedRef.current = true;
             setHeartDropped(true);
-            setHint('Makasih hatinya~');
+            setHint('🎉 Makasih hatinya~');
             playSound('success');
             setShowSuccess(true);
             setTimeout(() => onComplete(), 1800);
@@ -443,123 +468,167 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
     }, []);
 
     const knobLeft = `calc(${pct * 100}% - 22px)`;
-    const sophiaOpacity = pct > 0.05 ? 1 - pct * 0.85 : 1;
-    const adamHeartVisible = pct > 0.85;
-    const adamOpacity = adamHeartVisible ? (pct - 0.85) / 0.15 : 0;
+
+    const sophiaWhiteOpacity = Math.max(0, 1 - pct * 1.1);
+
+    const adamBrokenOpacity = Math.max(0, 1 - pct * 2.5);
+    const adamWhiteOpacity = pct > 0.6 ? Math.min(1, (pct - 0.6) / 0.4) : 0;
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center p-4">
             <AngryEmojis show={showAngryNgelak} />
             {showSuccess && <Confetti />}
 
-            <div className="doodle-border p-6 max-w-lg w-full slide-up">
+            <div className="relative doodle-border p-6 max-w-lg w-full slide-up">
+                <img
+                    src="assets/shy.png"
+                    alt=""
+                    className="absolute -top-5 -left-5 w-14 h-14 opacity-100 wobble"
+                    style={{ animationDelay: '0s' }}
+                />
+
+                <img
+                    src="assets/shy.png"
+                    alt=""
+                    className="absolute -top-5 -right-5 w-14 h-14 opacity-100 wobble"
+                    style={{ animationDelay: '1s' }}
+                />
+
+                <img
+                    src="assets/shy.png"
+                    alt=""
+                    className="absolute -bottom-5 -left-5 w-14 h-14 opacity-100 wobble"
+                    style={{ animationDelay: '2s' }}
+                />
+
+                <img
+                    src="assets/shy.png"
+                    alt=""
+                    className="absolute -bottom-5 -right-5 w-14 h-14 opacity-100 wobble"
+                    style={{ animationDelay: '3s' }}
+                />
+
                 <ProgressBar currentStep={2} />
 
                 <h2 className="text-3xl text-center mb-1 doodle-text">
-                    Minta Hatimu
+                    You have my heart
                 </h2>
-                {/* <p className="text-base text-center mb-1 text-gray-600">
-                  
-                </p> */}
                 <p className="text-sm text-center mb-4 text-gray-400 italic">
-                    Hatiku sudah kukasih. Sekarang… berikan hatimu untukku
+                    can I have yours too?
                 </p>
 
                 {!showSuccess ? (
                     <>
-                        {/* Characters */}
-                        <div className="flex justify-around items-end mb-6">
+                        {/* Characters + Slider inline */}
+                        <div className="flex items-center justify-center gap-4 mb-6">
+
                             {/* Sophia */}
-                            <div className="flex flex-col items-center">
-                                <div className="w-20 h-20 bg-gray-200 rounded-full border-4 border-gray-800 flex items-center justify-center text-3xl mb-1">
-                                    👧
+                            <div className="flex flex-col items-center min-w-[72px]">
+                                <div className="w-20 h-20 rounded-full border-4 border-gray-800 overflow-hidden mb-1">
+                                    <img
+                                        src="assets/sop.jpg"
+                                        alt="Profile"
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
-                                <p className="font-bold text-gray-800">Sophia</p>
+                                <p className="font-bold text-gray-800 text-sm">Sophia</p>
+                                {/* Black heart stays, white heart fades out as you slide */}
+                                <div className="flex gap-1 mt-1 text-2xl">
+                                    <span>🖤</span>
+                                    {/* <span
+                                        className="transition-opacity duration-150"
+                                        style={{ opacity: sophiaWhiteOpacity }}
+                                    >🤍</span> */}
+                                </div>
+                            </div>
+
+                            {/* Slider */}
+                            <div className="flex-1 max-w-[200px] px-1">
                                 <div
-                                    className="text-3xl mt-1 transition-opacity duration-200"
-                                    style={{ opacity: sophiaOpacity }}
+                                    ref={railRef}
+                                    onClick={onRailClick}
+                                    style={{
+                                        position: 'relative',
+                                        height: '14px',
+                                        background: '#e5e7eb',
+                                        borderRadius: '999px',
+                                        border: '2px solid #9ca3af',
+                                        cursor: 'pointer',
+                                    }}
                                 >
-                                    🖤
+                                    {/* Fill */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        left: 0, top: 0,
+                                        height: '100%',
+                                        width: `${pct * 100}%`,
+                                        background: 'linear-gradient(90deg, #d1d5db, #6b7280)',
+                                        borderRadius: '999px',
+                                        transition: ngelak ? 'none' : 'width 0.05s',
+                                    }} />
+
+                                    {/* Knob — white heart 🤍 */}
+                                    <div
+                                        ref={knobRef}
+                                        onMouseDown={onKnobMouseDown}
+                                        onTouchStart={onKnobTouchStart}
+                                        style={{
+                                            position: 'absolute',
+                                            top: '50%',
+                                            left: knobLeft,
+                                            transform: 'translateY(-50%)',
+                                            width: '44px',
+                                            height: '44px',
+                                            background: '#fff',
+                                            borderRadius: '50%',
+                                            border: '2px solid #9ca3af',
+                                            boxShadow: isDragging
+                                                ? '0 0 0 3px #d1d5db, 0 4px 12px rgba(0,0,0,0.2)'
+                                                : '0 2px 8px rgba(0,0,0,0.15)',
+                                            cursor: heartDropped ? 'default' : (isDragging ? 'grabbing' : 'grab'),
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '22px',
+                                            userSelect: 'none',
+                                            touchAction: 'none',
+                                            transition: ngelak
+                                                ? 'left 0.15s cubic-bezier(0.34,1.56,0.64,1)'
+                                                : 'left 0.05s',
+                                            zIndex: 10,
+                                        }}
+                                    >
+                                        🤍
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Adam */}
-                            <div className="flex flex-col items-center">
+                            <div className="flex flex-col items-center min-w-[72px]">
                                 <div
-                                    className={`w-20 h-20 rounded-full border-4 flex items-center justify-center text-3xl mb-1 transition-all duration-300 ${heartDropped ? 'border-yellow-500 bg-yellow-100' : 'border-dashed border-gray-400 bg-gray-100'}`}
+                                    className={`w-20 h-20 rounded-full border-4 overflow-hidden mb-1 transition-all duration-300 ${heartDropped
+                                        ? 'border-yellow-500 bg-yellow-100'
+                                        : 'border-dashed border-gray-400 bg-gray-100'
+                                        }`}
                                 >
-                                    👦
+                                    <img
+                                        src="assets/dam.jpg"
+                                        alt="Target"
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
-                                <p className="font-bold text-gray-800">Adam</p>
-                                <div
-                                    className="text-3xl mt-1 transition-opacity duration-200"
-                                    style={{ opacity: heartDropped ? 1 : adamOpacity }}
-                                >
-                                    {heartDropped ? '🖤' : (adamHeartVisible ? '🖤' : '💔')}
+                                <p className="font-bold text-gray-800 text-sm">Adam</p>
+
+                                <div className="relative text-2xl mt-1 w-8 h-8 flex items-center justify-center">
+                                    <span
+                                        className="absolute transition-opacity duration-150"
+                                        style={{ opacity: heartDropped ? 0 : adamBrokenOpacity }}
+                                    >💔</span>
+                                    <span
+                                        className="absolute transition-opacity duration-150"
+                                        style={{ opacity: heartDropped ? 1 : adamWhiteOpacity }}
+                                    >🤍</span>
                                 </div>
-                            </div>
-                        </div>
-
-                        {/* Rail + Knob */}
-                        <div className="px-2 mb-4">
-                            <div
-                                ref={railRef}
-                                onClick={onRailClick}
-                                style={{
-                                    position: 'relative',
-                                    height: '14px',
-                                    background: '#e5e7eb',
-                                    borderRadius: '999px',
-                                    border: '2px solid #374151',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                {/* Fill */}
-                                <div style={{
-                                    position: 'absolute',
-                                    left: 0,
-                                    top: 0,
-                                    height: '100%',
-                                    width: `${pct * 100}%`,
-                                    background: 'linear-gradient(90deg, #6b7280, #1f2937)',
-                                    borderRadius: '999px',
-                                    transition: ngelak ? 'none' : 'width 0.05s',
-                                }} />
-
-                                {/* Knob */}
-                                <div
-                                    ref={knobRef}
-                                    onMouseDown={onKnobMouseDown}
-                                    onTouchStart={onKnobTouchStart}
-                                    style={{
-                                        position: 'absolute',
-                                        top: '50%',
-                                        left: knobLeft,
-                                        transform: 'translateY(-50%)',
-                                        width: '44px',
-                                        height: '44px',
-                                        background: '#1f2937',
-                                        borderRadius: '50%',
-                                        border: '3px solid #fff',
-                                        boxShadow: isDragging ? '0 0 0 3px #6b7280, 0 4px 12px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.3)',
-                                        cursor: heartDropped ? 'default' : (isDragging ? 'grabbing' : 'grab'),
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: '22px',
-                                        userSelect: 'none',
-                                        touchAction: 'none',
-                                        transition: ngelak ? 'left 0.15s cubic-bezier(0.34,1.56,0.64,1)' : 'left 0.05s',
-                                        zIndex: 10,
-                                    }}
-                                >
-                                    🖤
-                                </div>
-                            </div>
-
-                            <div className="flex justify-between text-xs text-gray-400 mt-2 px-1">
-                                <span>Sophia 👧</span>
-                                <span>Adam 👦</span>
                             </div>
                         </div>
 
@@ -570,14 +639,12 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
                     </>
                 ) : (
                     <div className="text-center py-8 fade-in">
-                        <p className="text-5xl mb-4">💕</p>
-                        <p className="text-xl text-gray-500 mt-2">Hatiku buat kamu, hatimu buat aku…</p>
+                        <p className="text-5xl mb-4">🤍💕</p>
+                        <p className="text-xl text-gray-500 mt-2">Hatiku untukmu, hatimu untukku…</p>
+
                     </div>
                 )}
             </div>
-
-            {/* <div className="absolute top-10 right-10 text-6xl opacity-30 wobble">💖</div>
-            <div className="absolute bottom-10 left-10 text-6xl opacity-30 wobble" style={{ animationDelay: '0.5s' }}>💘</div> */}
         </div>
     );
 };
@@ -597,7 +664,7 @@ const FinalMessage = () => {
 
                 <div className="space-y-4 text-xl text-gray-700">
                     <p className="text-center">
-                        Selamat tanggal 12 lagi ya
+                        Selamat tanggal 12
                     </p>
                     <p className="text-center">
                         Maaf kalau yang kubikin kali ini tidak sesuai harapan hahah
@@ -608,7 +675,7 @@ const FinalMessage = () => {
                     </p>
 
                     <p className="text-center text-2xl pulse">
-                        di chat aja yaaa muahh
+                        di chat aja yaaa emuahh
                     </p>
                 </div>
 
