@@ -140,7 +140,7 @@ const AngryEmojis = ({ show }: { show: boolean }) => {
         <div className="fixed inset-0 pointer-events-none flex justify-center items-center z-50">
             <div className="text-8xl animate-angry flex gap-4">
                 <span className="wobble">😡</span>
-                <span className="wobble" style={{ animationDelay: '0.1s' }}>🤬</span>
+                <span className="wobble" style={{ animationDelay: '0.1s' }}>😤</span>
                 <span className="wobble" style={{ animationDelay: '0.2s' }}>💢</span>
             </div>
         </div>
@@ -191,7 +191,7 @@ const IntroPopup = ({ onStart }: { onStart: () => void }) => {
 
     const handleStart = () => {
         playSound('start');
-        playBackgroundMusic(); // Play background music after clicking "oke sayangku"
+        playBackgroundMusic();
         onStart();
     };
 
@@ -203,25 +203,42 @@ const IntroPopup = ({ onStart }: { onStart: () => void }) => {
                         Oii Sophia
                     </p>
 
-                    {!showOptions ? (
-                        <button
-                            onClick={handleClick}
-                            className="doodle-border px-8 py-4 text-2xl bg-white hover:bg-gray-100 transition-all duration-200 wobble hover:scale-105"
-                        >
-                            klik sini dong 👆
-                        </button>
-                    ) : (
-                        <div className="space-y-4 fade-in">
-                            <p className="text-xl text-gray-600">Ada game untuk kamu...</p>
-                            <img src="assets/cat5.gif" alt="" width="20%" className="mx-auto" />
-                            <button
-                                onClick={handleStart}
-                                className="doodle-border px-8 py-4 text-2xl bg-white hover:bg-gray-100 transition-all duration-200 bounce heartbeat"
-                            >
-                                gass?
-                            </button>
-                        </div>
-                    )}
+                    {!showOptions ?
+                        // (
+
+                        //     <button
+                        //         onClick={handleClick}
+                        //         className="doodle-border px-8 py-4 text-2xl bg-white hover:bg-gray-100 transition-all duration-200 wobble hover:scale-105"
+                        //     >
+                        //         klik sini dong 👆
+                        //     </button>
+                        // ) 
+
+                        (
+                            <div className="space-y-4 fade-in">
+                                <p className="text-base text-gray-600">ada sesuatu untuk kamu...</p>
+                                <img src="assets/cat5.gif" alt="" width="20%" className="mx-auto" />
+                                <button
+                                    onClick={handleStart}
+                                    className="doodle-border px-4 py-2 text-base bg-white hover:bg-gray-200 transition-all duration-500 heartbeat"
+                                >
+                                    sini yang 👆
+                                </button>
+                            </div>
+                        )
+
+                        : (
+                            <div className="space-y-4 fade-in">
+                                <p className="text-xl text-gray-600">Ada sesuatu untuk ayang...</p>
+                                <img src="assets/cat5.gif" alt="" width="20%" className="mx-auto" />
+                                <button
+                                    onClick={handleStart}
+                                    className="doodle-border px-8 py-4 text-2xl bg-white hover:bg-gray-100 transition-all duration-200 bounce heartbeat"
+                                >
+                                    gass?
+                                </button>
+                            </div>
+                        )}
                 </div>
 
                 <div className="absolute -top-4 -right-4 text-4xl">✨</div>
@@ -252,12 +269,12 @@ const Game1 = ({ onComplete }: { onComplete: () => void }) => {
                 onComplete();
             }, 1500);
         } else {
-            // kalau typo
+
             const currentLength = value.length;
             if (currentLength > 0 && currentLength <= targetTextLower.length) {
                 const expectedChar = targetTextLower[currentLength - 1];
                 if (value[currentLength - 1].toLowerCase() !== expectedChar) {
-                    // Wrong character typed!
+
                     setShake(true);
                     setShowAngry(true);
                     playSound('error');
@@ -349,7 +366,7 @@ const Game1 = ({ onComplete }: { onComplete: () => void }) => {
     );
 };
 
-// Game 2: Slide the Heart — knob slider from Sophia to Adam
+// Game 2
 const Game2 = ({ onComplete }: { onComplete: () => void }) => {
     const railRef = useRef<HTMLDivElement>(null);
     const knobRef = useRef<HTMLDivElement>(null);
@@ -368,7 +385,7 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
     const draggingRef = useRef(false);
     const heartDroppedRef = useRef(false);
 
-    // Keep refs in sync
+
     useEffect(() => { pctRef.current = pct; }, [pct]);
     useEffect(() => { draggingRef.current = isDragging; }, [isDragging]);
     useEffect(() => { heartDroppedRef.current = heartDropped; }, [heartDropped]);
@@ -379,14 +396,14 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
         if (heartDroppedRef.current) return;
         const newPct = clamp(rawPct);
 
-        // Ngelak check: too fast
+
         const speed = Math.abs(newPct - prevPctRef.current);
         if (speed > 0.07 && !ngelakCooldownRef.current && newPct < 0.92) {
             ngelakCooldownRef.current = true;
             const bouncePct = clamp(newPct - 0.08);
             setPct(bouncePct);
             pctRef.current = bouncePct;
-            setHint('😤 Pelan-pelan dong! Jangan kasar!');
+            setHint('😤 pelan pelan cayang');
             setNgelak(true);
             setShowAngryNgelak(true);
             playSound('error');
@@ -409,7 +426,7 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
         if (newPct >= 1 && !heartDroppedRef.current) {
             heartDroppedRef.current = true;
             setHeartDropped(true);
-            setHint('🎉 Makasih hatinya~');
+            setHint('makasih sayang');
             playSound('success');
             setShowSuccess(true);
             setTimeout(() => onComplete(), 1800);
@@ -423,7 +440,7 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
         return (clientX - rect.left) / rect.width;
     };
 
-    // Mouse events
+
     const onKnobMouseDown = (e: React.MouseEvent) => {
         if (heartDropped) return;
         e.preventDefault();
@@ -435,7 +452,7 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
     };
     const onMouseUp = () => setIsDragging(false);
 
-    // Touch events
+
     const onKnobTouchStart = (e: React.TouchEvent) => {
         if (heartDropped) return;
         e.preventDefault();
@@ -448,7 +465,7 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
     };
     const onTouchEnd = () => setIsDragging(false);
 
-    // Rail click
+
     const onRailClick = (e: React.MouseEvent) => {
         if (heartDropped) return;
         applyPct(getPct(e.clientX));
@@ -519,7 +536,7 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
 
                 {!showSuccess ? (
                     <>
-                        {/* Characters + Slider inline */}
+
                         <div className="flex items-center justify-center gap-4 mb-6">
 
                             {/* Sophia */}
@@ -532,7 +549,7 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
                                     />
                                 </div>
                                 <p className="font-bold text-gray-800 text-sm">Sophia</p>
-                                {/* Black heart stays, white heart fades out as you slide */}
+
                                 <div className="flex gap-1 mt-1 text-2xl">
                                     <span>🖤</span>
                                     {/* <span
@@ -556,7 +573,7 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
                                         cursor: 'pointer',
                                     }}
                                 >
-                                    {/* Fill */}
+
                                     <div style={{
                                         position: 'absolute',
                                         left: 0, top: 0,
@@ -567,7 +584,7 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
                                         transition: ngelak ? 'none' : 'width 0.05s',
                                     }} />
 
-                                    {/* Knob — white heart 🤍 */}
+
                                     <div
                                         ref={knobRef}
                                         onMouseDown={onKnobMouseDown}
@@ -639,8 +656,8 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
                     </>
                 ) : (
                     <div className="text-center py-8 fade-in">
-                        <p className="text-5xl mb-4">🤍💕</p>
-                        <p className="text-xl text-gray-500 mt-2">Hatiku untukmu, hatimu untukku…</p>
+                        <p className="text-5xl mb-4">Hehe 🤍💕</p>
+                        <p className="text-xl text-gray-500 mt-2">hatiku untukmu, hatimu untukku…</p>
 
                     </div>
                 )}
@@ -649,7 +666,7 @@ const Game2 = ({ onComplete }: { onComplete: () => void }) => {
     );
 };
 
-// Final Message Component
+
 const FinalMessage = () => {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -681,16 +698,12 @@ const FinalMessage = () => {
 
             </div>
 
-            {/* Decorative doodles */}
-            {/* <div className="absolute top-10 left-10 text-6xl opacity-30 wobble">🎈</div>
-            <div className="absolute top-10 right-10 text-6xl opacity-30 wobble" style={{ animationDelay: '0.3s' }}>🎁</div>
-            <div className="absolute bottom-10 left-10 text-6xl opacity-30 wobble" style={{ animationDelay: '0.6s' }}>🌟</div>
-            <div className="absolute bottom-10 right-10 text-6xl opacity-30 wobble" style={{ animationDelay: '0.9s' }}>💝</div> */}
+
         </div>
     );
 };
 
-// Main App Component
+
 function App() {
     const [gameState, setGameState] = useState<GameState>('intro');
 
