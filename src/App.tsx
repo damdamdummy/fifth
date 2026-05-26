@@ -1,761 +1,444 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useState, useRef } from "react";
+import {
+    collection,
+    addDoc,
+    getDocs,
+    query,
+    orderBy,
+} from "firebase/firestore";
+import {
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+} from "firebase/auth";
+import { db, auth } from "./firebase";
 
-type GameState = 'intro' | 'game1' | 'game2' | 'complete';
+const MESSAGES_PER_PAGE = 3;
 
-let bgAudioContext: AudioContext | null = null;
-let bgLoopTimeout: ReturnType<typeof setTimeout> | null = null;
-let bgPlaying = false;
+interface Message {
+    id: string;
+    name: string;
+    text: string;
+    timestamp: number;
+}
 
-const playBackgroundMusic = () => {
-    if (bgPlaying) return;
-    bgPlaying = true;
+function App() {
+    const [loaded, setLoaded] = useState(false);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [page, setPage] = useState(1);
+    const [senderName, setSenderName] = useState("");
+    const [messageText, setMessageText] = useState("");
+    const [sending, setSending] = useState(false);
+    const [sent, setSent] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const [loginEmail, setLoginEmail] = useState("");
+    const [loginPassword, setLoginPassword] = useState("");
+    const [loginError, setLoginError] = useState("");
+    const [loggingIn, setLoggingIn] = useState(false);
+    const [musicStarted, setMusicStarted] = useState(false);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
-    const notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63, 293.66, 261.63];
-    const noteDuration = 0.55;
-    const loopDuration = notes.length * noteDuration * 1000;
-
-    const playLoop = () => {
-        if (!bgPlaying) return;
-        try {
-            const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-            bgAudioContext = ctx;
-
-
-            const masterGain = ctx.createGain();
-            masterGain.connect(ctx.destination);
-            masterGain.gain.setValueAtTime(0, ctx.currentTime);
-            masterGain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 0.3);
-
-            notes.forEach((freq, i) => {
-                const startTime = ctx.currentTime + i * noteDuration;
-
-
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(masterGain);
-                osc.frequency.setValueAtTime(freq, startTime);
-                osc.type = 'sine';
-                gain.gain.setValueAtTime(0, startTime);
-                gain.gain.linearRampToValueAtTime(0.6, startTime + 0.04);
-                gain.gain.exponentialRampToValueAtTime(0.01, startTime + noteDuration * 0.85);
-                osc.start(startTime);
-                osc.stop(startTime + noteDuration);
-
-
-                const harmOsc = ctx.createOscillator();
-                const harmGain = ctx.createGain();
-                harmOsc.connect(harmGain);
-                harmGain.connect(masterGain);
-                harmOsc.frequency.setValueAtTime(freq / 2, startTime);
-                harmOsc.type = 'triangle';
-                harmGain.gain.setValueAtTime(0, startTime);
-                harmGain.gain.linearRampToValueAtTime(0.2, startTime + 0.04);
-                harmGain.gain.exponentialRampToValueAtTime(0.01, startTime + noteDuration * 0.7);
-                harmOsc.start(startTime);
-                harmOsc.stop(startTime + noteDuration);
-            });
-
-
-            bgLoopTimeout = setTimeout(() => {
-                try { ctx.close(); } catch (e) { }
-                playLoop();
-            }, loopDuration - 100);
-        } catch (e) {
-            console.log('Audio not available');
-        }
-    };
-
-    playLoop();
-};
-
-const playSound = (type: 'start' | 'error' | 'success') => {
-    try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        if (type === 'start') {
-            oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
-            oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
-            oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.4);
-        } else if (type === 'error') {
-            oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
-            oscillator.type = 'sawtooth';
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.2);
-        } else if (type === 'success') {
-            oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
-            oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1);
-            oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2);
-            oscillator.frequency.setValueAtTime(1046.50, audioContext.currentTime + 0.3);
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.5);
-        }
-    } catch (e) {
-        console.log('Audio not available');
-    }
-};
-
-
-const ProgressBar = ({ currentStep }: { currentStep: number }) => {
-    const totalSteps = 2;
-
-    return (
-        <div className="flex items-center justify-center gap-2 mb-6">
-            {[1, 2].map((step) => (
-                <div key={step} className="flex items-center">
-                    <div
-                        className={`step-dot w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold border-2 transition-all duration-300 ${step <= currentStep
-                            ? 'bg-yellow-500 border-yellow-500 text-white scale-110'
-                            : 'bg-white border-gray-300 text-gray-400'
-                            }`}
-                        id={`dot${step}`}
-                    >
-                        {step}
-                    </div>
-                    {step < totalSteps && (
-                        <div className={`w-8 h-0.5 mx-1 ${step < currentStep ? 'bg-yellow-500' : 'bg-gray-300'}`}></div>
-                    )}
-                </div>
-            ))}
-        </div>
-    );
-};
-
-const AngryEmojis = ({ show }: { show: boolean }) => {
-    if (!show) return null;
-    return (
-        <div className="fixed inset-0 pointer-events-none flex justify-center items-center z-50">
-            <div className="text-8xl animate-angry flex gap-4">
-                <span className="wobble">😡</span>
-                <span className="wobble" style={{ animationDelay: '0.1s' }}>😤</span>
-                <span className="wobble" style={{ animationDelay: '0.2s' }}>💢</span>
-            </div>
-        </div>
-    );
-};
-
-
-const Confetti = () => {
-    const colors = ['#1a1a1a', '#666666', '#999999', '#333333'];
-    const confettiPieces = Array.from({ length: 30 }, (_, i) => ({
-        id: i,
-        left: Math.random() * 100,
-        delay: Math.random() * 2,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        rotation: Math.random() * 360,
-        size: 10 + Math.random() * 10,
-    }));
-
-    return (
-        <>
-            {confettiPieces.map((piece) => (
-                <div
-                    key={piece.id}
-                    className="confetti"
-                    style={{
-                        left: `${piece.left}%`,
-                        animationDelay: `${piece.delay}s`,
-                        backgroundColor: piece.color,
-                        width: piece.size,
-                        height: piece.size,
-                        borderRadius: Math.random() > 0.5 ? '50%' : '0',
-                        transform: `rotate(${piece.rotation}deg)`,
-                    }}
-                />
-            ))}
-        </>
-    );
-};
-
-
-const IntroPopup = ({ onStart }: { onStart: () => void }) => {
-    const [showOptions, setShowOptions] = useState(false);
-
-    const handleClick = () => {
-        playSound('start');
-        setShowOptions(true);
-    };
-
-    const handleStart = () => {
-        playSound('start');
-        playBackgroundMusic();
-        onStart();
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="doodle-border p-8 max-w-sm w-full slide-up doodle-bg">
-                <div className="text-center">
-                    <p className="text-4xl mb-6 doodle-text text-gray-800 wobble">
-                        Halo Sophia
-                    </p>
-
-                    {!showOptions ?
-                        // (
-
-                        //     <button
-                        //         onClick={handleClick}
-                        //         className="doodle-border px-8 py-4 text-2xl bg-white hover:bg-gray-100 transition-all duration-200 wobble hover:scale-105"
-                        //     >
-                        //         klik sini dong 👆
-                        //     </button>
-                        // ) 
-
-                        (
-                            <div className="space-y-4 fade-in">
-                                {/* <p className="text-base text-gray-600">ada sesuatu untuk kamu...</p> */}
-                                <img src="assets/cat5.gif" alt="" width="40%" className="mx-auto" />
-                                <br />
-                                <button
-                                    onClick={handleStart}
-                                    className="doodle-border px-4 py-1 text-base bg-white hover:bg-gray-200 transition-all duration-500 heartbeat"
-                                >
-                                    sini yang 👆
-                                </button>
-                            </div>
-                        )
-
-                        : (
-                            <div className="space-y-4 fade-in">
-                                <p className="text-xl text-gray-600">Ada sesuatu untuk ayang...</p>
-                                <img src="assets/cat5.gif" alt="" width="20%" className="mx-auto" />
-                                <button
-                                    onClick={handleStart}
-                                    className="doodle-border px-8 py-4 text-2xl bg-white hover:bg-gray-100 transition-all duration-200 bounce heartbeat"
-                                >
-                                    gass?
-                                </button>
-                            </div>
-                        )}
-                </div>
-
-                <div className="absolute -top-4 -right-4 text-4xl">✨</div>
-                <div className="absolute -bottom-4 -left-4 text-4xl">💫</div>
-            </div>
-        </div>
-    );
-};
-
-const Game1 = ({ onComplete }: { onComplete: () => void }) => {
-    const [input, setInput] = useState('');
-    const [shake, setShake] = useState(false);
-    const [showAngry, setShowAngry] = useState(false);
-    const [showSuccess, setShowSuccess] = useState(false);
-
-    const targetText = 'saya Sophia bersumpah hanya mencintai Adam seorang';
-    const targetTextLower = targetText.toLowerCase();
-
-    const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setInput(value);
-
-
-        if (value.toLowerCase() === targetTextLower) {
-            playSound('success');
-            setShowSuccess(true);
-            setTimeout(() => {
-                onComplete();
-            }, 1500);
-        } else {
-
-            const currentLength = value.length;
-            if (currentLength > 0 && currentLength <= targetTextLower.length) {
-                const expectedChar = targetTextLower[currentLength - 1];
-                if (value[currentLength - 1].toLowerCase() !== expectedChar) {
-
-                    setShake(true);
-                    setShowAngry(true);
-                    playSound('error');
-                    setTimeout(() => {
-                        setShake(false);
-                        setShowAngry(false);
-                    }, 500);
-                }
+    useEffect(() => {
+        const handleFirstTouch = () => {
+            if (!musicStarted && audioRef.current) {
+                audioRef.current.volume = 0.18;
+                audioRef.current.play().catch(() => { });
+                setMusicStarted(true);
             }
+        };
+        window.addEventListener("click", handleFirstTouch, { once: true });
+        window.addEventListener("touchstart", handleFirstTouch, { once: true });
+        return () => {
+            window.removeEventListener("click", handleFirstTouch);
+            window.removeEventListener("touchstart", handleFirstTouch);
+        };
+    }, [musicStarted]);
+
+    useEffect(() => {
+        setLoaded(true);
+        fetchMessages();
+        const unsub = onAuthStateChanged(auth, (user) => {
+            setIsAdmin(!!user && user.email === "zettttto@outlook.com");
+        });
+        return () => unsub();
+    }, []);
+
+    const fetchMessages = async () => {
+        try {
+            const q = query(collection(db, "messages"), orderBy("timestamp", "desc"));
+            const snap = await getDocs(q);
+            const msgs: Message[] = snap.docs.map((d) => ({
+                id: d.id,
+                ...(d.data() as Omit<Message, "id">),
+            }));
+            setMessages(msgs);
+        } catch (e) {
+            console.error("Failed to fetch messages", e);
         }
     };
 
+    const handleSend = async () => {
+        if (!messageText.trim()) return;
+        setSending(true);
+        try {
+            await addDoc(collection(db, "messages"), {
+                name: senderName.trim() || "anonymous",
+                text: messageText.trim(),
+                timestamp: Date.now(),
+            });
+            setMessageText("");
+            setSenderName("");
+            setSent(true);
+            setTimeout(() => setSent(false), 3000);
+            fetchMessages();
+        } catch (e) {
+            console.error("Failed to send message", e);
+        }
+        setSending(false);
+    };
+
+    const handleLogin = async () => {
+        setLoggingIn(true);
+        setLoginError("");
+        try {
+            await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+            setShowLoginModal(false);
+            setLoginEmail("");
+            setLoginPassword("");
+        } catch (e: any) {
+            setLoginError("Login failed. Check credentials.");
+        }
+        setLoggingIn(false);
+    };
+
+    const handleLogout = async () => {
+        await signOut(auth);
+    };
+
+    const totalPages = Math.ceil(messages.length / MESSAGES_PER_PAGE);
+    const pagedMessages = messages.slice(
+        (page - 1) * MESSAGES_PER_PAGE,
+        page * MESSAGES_PER_PAGE
+    );
+
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-4">
-            <AngryEmojis show={showAngry} />
+        <main className="min-h-screen bg-[#0a0a0a] relative overflow-hidden">
+            <audio ref={audioRef} loop src="assets/bg-music.mp3" />
 
-            {showSuccess && <Confetti />}
 
-            <div className="doodle-border p-6 max-w-md w-full slide-up">
-                <ProgressBar currentStep={1} />
+            <div
+                className="absolute inset-0 pointer-events-none opacity-[0.15]"
+                style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+                }}
+            />
 
-                <h2 className="text-3xl text-center mb-2 doodle-text">
-                    Janji Suci 🙏
-                </h2>
 
-                <br />
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <svg className="absolute w-full h-full opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <path d="M-10,20 Q30,15 50,25 T90,15 T130,30" stroke="white" strokeWidth="0.3" fill="none" className="opacity-40" />
+                    <path d="M-5,60 Q25,55 45,65 T85,50 T125,70" stroke="white" strokeWidth="0.2" fill="none" className="opacity-30" />
+                    <path d="M-15,85 Q20,80 40,90 T80,75 T120,95" stroke="white" strokeWidth="0.25" fill="none" className="opacity-35" />
+                    <path d="M60,5 Q80,10 100,5 T140,15" stroke="white" strokeWidth="0.2" fill="none" className="opacity-25" />
+                    <path d="M-20,45 Q10,40 30,50 T70,35 T110,55" stroke="white" strokeWidth="0.15" fill="none" className="opacity-20" />
+                </svg>
+            </div>
 
-                {!showSuccess ? (
-                    <>
-                        <p className="text-lg text-center mb-4 text-gray-700">
-                            Ayo ketik ulang kalimat di bawah ini:
-                        </p>
-
-                        <div className="bg-gray-100 p-4 rounded-lg mb-4 text-center">
-                            <p className="text-lg font-bold text-gray-800">
-                                "saya Sophia bersumpah hanya mencintai Adam seorang"
-                            </p>
-                        </div>
-
-                        <input
-                            type="text"
-                            value={input}
-                            onChange={handleInput}
-                            placeholder="Ketik di sini..."
-                            className={`w-full p-4 text-xl border-3 border-gray-800 rounded-lg text-center ${shake ? 'shake input-error' : ''}`}
-
-                        />
-
-                        <p className="text-sm text-center mt-4 text-gray-500">
-                            {input.length}/{targetText.length} karakter
-                        </p>
-                    </>
+            {/* Admin corner button */}
+            <div className="absolute top-4 right-4 z-50">
+                {isAdmin ? (
+                    <button
+                        onClick={handleLogout}
+                        className="text-white/30 text-xs tracking-widest uppercase hover:text-white/60 transition-colors"
+                    >
+                        logout
+                    </button>
                 ) : (
-                    <div className="text-center py-8 fade-in">
-                        <p className="text-4xl mb-4">OK lah😌 lanjut…</p>
-
-                    </div>
+                    <button
+                        onClick={() => setShowLoginModal(true)}
+                        className="text-white/10 text-xs tracking-widest uppercase hover:text-white/30 transition-colors"
+                    >
+                        .
+                    </button>
                 )}
             </div>
 
+            {/* Login Modal */}
+            {showLoginModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                    <div
+                        className="bg-[#f5f5f5] p-8 w-full max-w-sm relative"
+                        style={{
+                            clipPath: 'polygon(0% 1%, 4% 0%, 9% 2%, 16% 0%, 23% 3%, 31% 1%, 38% 0%, 100% 0%, 100% 100%, 62% 98%, 54% 100%, 0% 100%)',
+                        }}
+                    >
+                        <button
+                            onClick={() => { setShowLoginModal(false); setLoginError(""); }}
+                            className="absolute top-4 right-6 text-black/40 hover:text-black text-lg"
+                        >×</button>
+                        <p className="text-black/40 text-xs tracking-[0.3em] uppercase mb-4">Adam Access</p>
+                        <input
+                            type="email"
+                            placeholder="Email"
+                            value={loginEmail}
+                            onChange={e => setLoginEmail(e.target.value)}
+                            className="w-full border-b border-black/20 bg-transparent text-black text-sm py-2 mb-4 outline-none placeholder-black/30 focus:border-black transition-colors"
+                        />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={loginPassword}
+                            onChange={e => setLoginPassword(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && handleLogin()}
+                            className="w-full border-b border-black/20 bg-transparent text-black text-sm py-2 mb-4 outline-none placeholder-black/30 focus:border-black transition-colors"
+                        />
+                        {loginError && <p className="text-red-500 text-xs mb-3">{loginError}</p>}
+                        <button
+                            onClick={handleLogin}
+                            disabled={loggingIn}
+                            className="w-full py-2 bg-black text-white text-xs tracking-widest uppercase hover:bg-black/80 transition-colors disabled:opacity-50"
+                        >
+                            {loggingIn ? "..." : "Enter"}
+                        </button>
+                    </div>
+                </div>
+            )}
 
-            <img
-                src="assets/cat1.gif"
-                alt=""
-                className="absolute top-10 left-10 w-14 h-14 opacity-30 wobble"
-            />
+            {/* Main content */}
+            <div className="relative z-10 min-h-screen flex flex-col">
 
-            <img
-                src="assets/cat2.gif"
-                alt=""
-                className="absolute bottom-10 right-10 w-14 h-14 opacity-30 wobble"
-                style={{ animationDelay: '0.5s' }}
-            />
+                {/* <header className="relative">
+                    <div
+                        className="absolute top-0 left-0 w-[85%] h-16 bg-white skew-x-[-12deg] -translate-x-4"
+                        style={{ transform: 'skewX(-12deg) translateX(-20px)' }}
+                    />
+                    <div className="relative z-10 px-6 py-4 flex items-center justify-between">
+                        <span className="text-black font-bold tracking-widest text-sm uppercase">
+                            延蔵 (Adam)
+                        </span>
 
-            <img
-                src="assets/cat3.gif"
-                alt=""
-                className="absolute top-24 right-32 w-12 h-12 opacity-25 wobble"
-                style={{ animationDelay: '1s' }}
-            />
+                    </div>
+                </header> */}
 
-            <img
-                src="assets/cat4.gif"
-                alt=""
-                className="absolute top-1/2 left-16 w-16 h-16 opacity-20 wobble"
-                style={{ animationDelay: '1.5s' }}
-            />
-        </div>
-    );
-};
+                {/* Profile section */}
+                <div className="flex-1 flex items-center justify-center px-4 py-8 ">
+                    <div className="max-w-4xl w-full">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
 
-// Game 2
-const Game2 = ({ onComplete }: { onComplete: () => void }) => {
-    const railRef = useRef<HTMLDivElement>(null);
-    const knobRef = useRef<HTMLDivElement>(null);
+                            {/* Profile picture */}
+                            <div
+                                className={`relative transition-all duration-1000 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                            >
+                                {/* Top-left overlay */}
+                                <img
+                                    src="assets/image.png"
+                                    alt=""
+                                    className="absolute -top-4 -right-4 w-30 h-30 object-contain z-20"
+                                />
 
-    const [pct, setPct] = useState(0);
-    const [isDragging, setIsDragging] = useState(false);
-    const [heartDropped, setHeartDropped] = useState(false);
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [hint, setHint] = useState('');
-    const [ngelak, setNgelak] = useState(false);
-    const [showAngryNgelak, setShowAngryNgelak] = useState(false);
+                                {/* Bottom-right overlay */}
+                                <img
+                                    src="assets/spider.png"
+                                    alt=""
+                                    className="absolute -bottom-4 -left-4 w-16 h-16 object-contain z-20"
+                                />
 
-    const prevPctRef = useRef(0);
-    const ngelakCooldownRef = useRef(false);
-    const pctRef = useRef(0);
-    const draggingRef = useRef(false);
-    const heartDroppedRef = useRef(false);
-
-
-    useEffect(() => { pctRef.current = pct; }, [pct]);
-    useEffect(() => { draggingRef.current = isDragging; }, [isDragging]);
-    useEffect(() => { heartDroppedRef.current = heartDropped; }, [heartDropped]);
-
-    const clamp = (v: number) => Math.max(0, Math.min(1, v));
-
-    const applyPct = (rawPct: number) => {
-        if (heartDroppedRef.current) return;
-        const newPct = clamp(rawPct);
-
-
-        const speed = Math.abs(newPct - prevPctRef.current);
-        if (speed > 0.07 && !ngelakCooldownRef.current && newPct < 0.92) {
-            ngelakCooldownRef.current = true;
-            const bouncePct = clamp(newPct - 0.08);
-            setPct(bouncePct);
-            pctRef.current = bouncePct;
-            setHint('😤 pelan pelan cayang');
-            setNgelak(true);
-            setShowAngryNgelak(true);
-            playSound('error');
-            setTimeout(() => {
-                setNgelak(false);
-                setShowAngryNgelak(false);
-                ngelakCooldownRef.current = false;
-            }, 600);
-            prevPctRef.current = bouncePct;
-            return;
-        }
-
-        prevPctRef.current = newPct;
-        setPct(newPct);
-
-        if (newPct < 0.3) setHint('ayo yang…');
-        else if (newPct < 0.7) setHint('geser terus…');
-        else if (newPct < 0.95) setHint('🥺 hampir sampai…');
-
-        if (newPct >= 1 && !heartDroppedRef.current) {
-            heartDroppedRef.current = true;
-            setHeartDropped(true);
-            setHint('makasih sayang');
-            playSound('success');
-            setShowSuccess(true);
-            setTimeout(() => onComplete(), 1800);
-        }
-    };
-
-    const getPct = (clientX: number) => {
-        const rail = railRef.current;
-        if (!rail) return 0;
-        const rect = rail.getBoundingClientRect();
-        return (clientX - rect.left) / rect.width;
-    };
-
-
-    const onKnobMouseDown = (e: React.MouseEvent) => {
-        if (heartDropped) return;
-        e.preventDefault();
-        setIsDragging(true);
-    };
-    const onMouseMove = (e: MouseEvent) => {
-        if (!draggingRef.current || heartDroppedRef.current) return;
-        applyPct(getPct(e.clientX));
-    };
-    const onMouseUp = () => setIsDragging(false);
-
-
-    const onKnobTouchStart = (e: React.TouchEvent) => {
-        if (heartDropped) return;
-        e.preventDefault();
-        setIsDragging(true);
-    };
-    const onTouchMove = (e: TouchEvent) => {
-        if (!draggingRef.current || heartDroppedRef.current) return;
-        e.preventDefault();
-        applyPct(getPct(e.touches[0].clientX));
-    };
-    const onTouchEnd = () => setIsDragging(false);
-
-
-    const onRailClick = (e: React.MouseEvent) => {
-        if (heartDropped) return;
-        applyPct(getPct(e.clientX));
-    };
-
-    useEffect(() => {
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onMouseUp);
-        window.addEventListener('touchmove', onTouchMove, { passive: false });
-        window.addEventListener('touchend', onTouchEnd);
-        return () => {
-            window.removeEventListener('mousemove', onMouseMove);
-            window.removeEventListener('mouseup', onMouseUp);
-            window.removeEventListener('touchmove', onTouchMove);
-            window.removeEventListener('touchend', onTouchEnd);
-        };
-    }, []);
-
-    const knobLeft = `calc(${pct * 100}% - 22px)`;
-
-    const sophiaWhiteOpacity = Math.max(0, 1 - pct * 1.1);
-
-    const adamBrokenOpacity = Math.max(0, 1 - pct * 2.5);
-    const adamWhiteOpacity = pct > 0.6 ? Math.min(1, (pct - 0.6) / 0.4) : 0;
-
-    return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-4">
-            <AngryEmojis show={showAngryNgelak} />
-            {showSuccess && <Confetti />}
-
-            <div className="relative doodle-border p-6 max-w-lg w-full slide-up">
-                <img
-                    src="assets/shy.png"
-                    alt=""
-                    className="absolute -top-5 -left-5 w-14 h-14 opacity-100 wobble"
-                    style={{ animationDelay: '0s' }}
-                />
-
-                <img
-                    src="assets/shy.png"
-                    alt=""
-                    className="absolute -top-5 -right-5 w-14 h-14 opacity-100 wobble"
-                    style={{ animationDelay: '1s' }}
-                />
-
-                <img
-                    src="assets/shy.png"
-                    alt=""
-                    className="absolute -bottom-5 -left-5 w-14 h-14 opacity-100 wobble"
-                    style={{ animationDelay: '2s' }}
-                />
-
-                <img
-                    src="assets/shy.png"
-                    alt=""
-                    className="absolute -bottom-5 -right-5 w-14 h-14 opacity-100 wobble"
-                    style={{ animationDelay: '3s' }}
-                />
-
-                <ProgressBar currentStep={2} />
-
-                <h2 className="text-3xl text-center mb-1 doodle-text">
-                    You have my heart
-                </h2>
-                <p className="text-sm text-center mb-4 text-gray-400 italic">
-                    can I have yours too?
-                </p>
-
-                {!showSuccess ? (
-                    <>
-
-                        <div className="flex items-center justify-center gap-4 mb-6">
-
-                            {/* Sophia */}
-                            <div className="flex flex-col items-center min-w-[72px]">
-                                <div className="w-20 h-20 rounded-full border-4 border-gray-800 overflow-hidden mb-1">
-                                    <img
-                                        src="assets/sop.jpg"
-                                        alt="Profile"
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                                <p className="font-bold text-gray-800 text-sm">Sophia</p>
-
-                                <div className="flex gap-1 mt-1 text-2xl">
-                                    <span>🖤</span>
-                                    {/* <span
-                                        className="transition-opacity duration-150"
-                                        style={{ opacity: sophiaWhiteOpacity }}
-                                    >🤍</span> */}
-                                </div>
-                            </div>
-
-                            {/* Slider */}
-                            <div className="flex-1 max-w-[200px] px-1">
+                                {/* Torn paper + image */}
                                 <div
-                                    ref={railRef}
-                                    onClick={onRailClick}
+                                    className="relative w-full"
                                     style={{
-                                        position: 'relative',
-                                        height: '14px',
-                                        background: '#e5e7eb',
-                                        borderRadius: '999px',
-                                        border: '2px solid #9ca3af',
-                                        cursor: 'pointer',
+                                        clipPath: 'polygon(0% 2%, 3% 0%, 8% 3%, 15% 1%, 22% 4%, 30% 0%, 38% 2%, 45% 0%, 52% 3%, 60% 1%, 68% 4%, 75% 0%, 82% 2%, 90% 1%, 95% 3%, 100% 0%, 100% 98%, 97% 100%, 92% 97%, 85% 100%, 78% 98%, 70% 100%, 62% 97%, 55% 100%, 48% 98%, 40% 100%, 32% 97%, 25% 100%, 18% 98%, 10% 100%, 5% 97%, 0% 100%)',
+                                        transform: 'rotate(0deg)',
                                     }}
                                 >
-
-                                    <div style={{
-                                        position: 'absolute',
-                                        left: 0, top: 0,
-                                        height: '100%',
-                                        width: `${pct * 100}%`,
-                                        background: 'linear-gradient(90deg, #d1d5db, #6b7280)',
-                                        borderRadius: '999px',
-                                        transition: ngelak ? 'none' : 'width 0.05s',
-                                    }} />
-
-
-                                    <div
-                                        ref={knobRef}
-                                        onMouseDown={onKnobMouseDown}
-                                        onTouchStart={onKnobTouchStart}
-                                        style={{
-                                            position: 'absolute',
-                                            top: '50%',
-                                            left: knobLeft,
-                                            transform: 'translateY(-50%)',
-                                            width: '44px',
-                                            height: '44px',
-                                            background: '#fff',
-                                            borderRadius: '50%',
-                                            border: '2px solid #9ca3af',
-                                            boxShadow: isDragging
-                                                ? '0 0 0 3px #d1d5db, 0 4px 12px rgba(0,0,0,0.2)'
-                                                : '0 2px 8px rgba(0,0,0,0.15)',
-                                            cursor: heartDropped ? 'default' : (isDragging ? 'grabbing' : 'grab'),
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            fontSize: '22px',
-                                            userSelect: 'none',
-                                            touchAction: 'none',
-                                            transition: ngelak
-                                                ? 'left 0.15s cubic-bezier(0.34,1.56,0.64,1)'
-                                                : 'left 0.05s',
-                                            zIndex: 10,
-                                        }}
-                                    >
-                                        🤍
+                                    <div className="aspect-[3/4] overflow-hidden">
+                                        <img
+                                            src="assets/sm.png"
+                                            alt="Profile portrait"
+                                            className="w-full h-full object-cover grayscale contrast-125"
+                                        />
+                                        <div
+                                            className="absolute inset-0 pointer-events-none opacity-30"
+                                            style={{
+                                                backgroundImage: `radial-gradient(circle, black 1px, transparent 1px)`,
+                                                backgroundSize: '4px 4px',
+                                            }}
+                                        />
+                                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                            <svg width="120" height="120" viewBox="0 0 100 100" className="opacity-80">
+                                                <polygon points="50,5 61,40 98,40 68,62 79,98 50,75 21,98 32,62 2,40 39,40" fill="black" />
+                                            </svg>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Adam */}
-                            <div className="flex flex-col items-center min-w-[72px]">
+                            {/* Profile info + message form */}
+                            <div className={`transition-all duration-1000 delay-300 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                                 <div
-                                    className={`w-20 h-20 rounded-full border-4 overflow-hidden mb-1 transition-all duration-300 ${heartDropped
-                                        ? 'border-yellow-500 bg-yellow-100'
-                                        : 'border-dashed border-gray-400 bg-gray-100'
-                                        }`}
+                                    className="relative bg-[#f5f5f5] p-8 lg:p-10"
+                                    style={{
+                                        clipPath: 'polygon(0% 1%, 4% 0%, 9% 2%, 16% 0%, 23% 3%, 31% 1%, 38% 0%, 45% 2%, 53% 0%, 61% 3%, 69% 1%, 76% 0%, 83% 2%, 91% 0%, 97% 1%, 100% 0%, 100% 99%, 96% 100%, 91% 98%, 84% 100%, 77% 99%, 69% 100%, 62% 98%, 54% 100%, 47% 99%, 39% 100%, 31% 98%, 24% 100%, 17% 99%, 9% 100%, 3% 98%, 0% 100%)',
+                                    }}
                                 >
-                                    <img
-                                        src="assets/dam.jpg"
-                                        alt="Target"
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                                <p className="font-bold text-gray-800 text-sm">Adam</p>
 
-                                <div className="relative text-2xl mt-1 w-8 h-8 flex items-center justify-center">
-                                    <span
-                                        className="absolute transition-opacity duration-150"
-                                        style={{ opacity: heartDropped ? 0 : adamBrokenOpacity }}
-                                    >💔</span>
-                                    <span
-                                        className="absolute transition-opacity duration-150"
-                                        style={{ opacity: heartDropped ? 1 : adamWhiteOpacity }}
-                                    >🤍</span>
+                                    <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-black mb-1 leading-tight">ADAM</h1>
+                                    {/* <div className="w-2 h-px bg-black mb-6" /> */}
+                                    <p className="text-black/50 text-sm lg:text-base leading-relaxed mb-8 max-w-md italic">
+                                        "my mask speaks louder than my name."
+                                    </p>
+                                    {/* <div className="flex flex-wrap gap-2 mb-10">
+                                        {['Of Age', 'INTJ 6w5', 'He/Him'].map((tag, i) => (
+                                            <span
+                                                key={tag}
+                                                className="px-2 py-1 border border-black/30 text-black/70 text-xs tracking-wider uppercase"
+                                                style={{ animationDelay: `${i * 100}ms` }}
+                                            >
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div> */}
+
+                                    {/* Anonymous message form */}
+                                    <div
+                                        className="border-t border-black/10 pt-6 -mx-8 lg:-mx-10 -mb-8 lg:-mb-10 px-8 lg:px-10 pb-8 lg:pb-10"
+                                        style={{
+                                            backgroundColor: '#0a0a0a',
+                                            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+                                            backgroundBlendMode: 'overlay',
+                                        }}
+                                    >
+                                        {/* <div className="w-6 h-px bg-white/40 mb-6 mx-auto" /> */}
+                                        <p className="text-white/40 text-xs tracking-[0.25em] uppercase mt-8 mb-6">
+                                            leave a message
+                                        </p>
+                                        <input
+                                            type="text"
+                                            placeholder="your name (optional)"
+                                            value={senderName}
+                                            onChange={e => setSenderName(e.target.value)}
+                                            maxLength={40}
+                                            className="w-full border-b border-white/20 bg-transparent text-white text-sm py-2 mb-3 outline-none placeholder-white/25 focus:border-white transition-colors"
+                                        />
+                                        <textarea
+                                            placeholder="say something..."
+                                            value={messageText}
+                                            onChange={e => setMessageText(e.target.value)}
+                                            maxLength={300}
+                                            rows={3}
+                                            className="w-full border-b border-white/20 bg-transparent text-white text-sm py-2 mb-4 outline-none placeholder-white/25 focus:border-white transition-colors resize-none"
+                                        />
+                                        <div className="flex items-center gap-4">
+                                            <button
+                                                onClick={handleSend}
+                                                disabled={sending || !messageText.trim()}
+                                                className="px-6 py-2 bg-white text-black text-xs tracking-widest uppercase hover:bg-white/80 transition-colors disabled:opacity-40"
+                                            >
+                                                {sending ? "sending..." : "send"}
+                                            </button>
+                                            {sent && (
+                                                <span className="text-white/40 text-xs tracking-wider animate-pulse">
+                                                    message sent ✓
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Hint */}
-                        <p className="text-center text-sm text-gray-500 min-h-6 transition-all duration-200">
-                            {hint}
-                        </p>
-                    </>
-                ) : (
-                    <div className="text-center py-8 fade-in">
-                        <p className="text-base text-gray-500 mt-2">untukmu hatiku, untukku hatimu heheh 💕 </p>
+                        {/* Messages section */}
+                        {messages.length > 0 && (
+                            <div className={`mt-12 transition-all duration-1000 delay-500 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+                                <div className="flex items-center gap-4 mb-6">
+                                    <p className="text-white/20 text-xs tracking-[0.3em] uppercase">
+                                        messages
+                                    </p>
+                                    <div className="flex-1 h-px bg-white/10" />
+                                    <p className="text-white/20 text-xs">
+                                        {messages.length} total
+                                    </p>
+                                </div>
 
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {pagedMessages.map((msg) => (
+                                        <div
+                                            key={msg.id}
+                                            className="relative bg-white/5 border border-white/10 p-5"
+                                            style={{
+                                                clipPath: 'polygon(0% 0%, 97% 0%, 100% 3%, 100% 100%, 3% 100%, 0% 97%)',
+                                            }}
+                                        >
+                                            {/* Sender name */}
+                                            <p className={`text-white/40 text-xs tracking-widest uppercase mb-2 ${!isAdmin ? 'blur-sm select-none' : ''}`}>
+                                                {msg.name || "anonymous"}
+                                            </p>
+
+                                            {/* Message text */}
+                                            <p className={`text-white/70 text-sm leading-relaxed ${!isAdmin ? 'blur-sm select-none' : ''}`}>
+                                                {msg.text}
+                                            </p>
+
+                                            {/* Timestamp — only visible to admin */}
+                                            {isAdmin && (
+                                                <p className="text-white/20 text-xs mt-3">
+                                                    {new Date(msg.timestamp).toLocaleDateString('en-US', {
+                                                        month: 'short', day: 'numeric',
+                                                        hour: '2-digit', minute: '2-digit'
+                                                    })}
+                                                </p>
+                                            )}
+
+                                            {/* Lock icon for guests */}
+                                            {!isAdmin && (
+                                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5">
+                                                        <rect x="3" y="11" width="18" height="11" rx="2" />
+                                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                                    </svg>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Pagination */}
+                                {totalPages > 1 && (
+                                    <div className="flex items-center justify-center gap-3 mt-6">
+                                        <button
+                                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                                            disabled={page === 1}
+                                            className="text-white/30 text-xs tracking-widest uppercase hover:text-white/60 transition-colors disabled:opacity-20"
+                                        >
+                                            ← prev
+                                        </button>
+                                        <span className="text-white/20 text-xs">
+                                            {page} / {totalPages}
+                                        </span>
+                                        <button
+                                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={page === totalPages}
+                                            className="text-white/30 text-xs tracking-widest uppercase hover:text-white/60 transition-colors disabled:opacity-20"
+                                        >
+                                            next →
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
-                )}
-            </div>
-        </div>
-    );
-};
-
-
-const FinalMessage = () => {
-    return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-4">
-            <Confetti />
-
-            <div className="doodle-border p-8 max-w-md w-full slide-up">
-                <h2 className="text-4xl text-center mb-6 doodle-text">
-                    Pimensip Sayang
-                </h2>
-
-                <div className="border-t-2 border-dashed border-gray-400 my-6"></div>
-
-                <div className="space-y-4 text-xl text-gray-700">
-                    <p className="text-center">
-                        Selamat tanggal 12.
-                        <br />
-                        Semoga yang kita jaga dalam hati, dijaga semesta juga.
-                    </p>
-                    <br />
                 </div>
 
+                {/* Footer */}
+                <footer className="relative py-6 px-6">
+                    <div className="relative z-10 flex items-center justify-between">
+                        <span className="text-white/40 text-xs tracking-widest">© 2026 Adam</span>
+                        <span className="text-white/30 text-xs">All Rights Reserved</span>
+                    </div>
+                </footer>
             </div>
-
-
-        </div>
-    );
-};
-
-
-function App() {
-    const [gameState, setGameState] = useState<GameState>('intro');
-
-    const startGame = () => {
-        playSound('start');
-        setTimeout(() => {
-            setGameState('game1');
-        }, 500);
-    };
-
-    const completeGame1 = () => {
-        setGameState('game2');
-    };
-
-    const completeGame2 = () => {
-        setGameState('complete');
-    };
-
-    return (
-        <div className="app-shell">
-            <style>{`
-            html, body, #root {
-                margin: 0;
-                padding: 0;
-                width: 100%;
-                height: 100%;
-                overflow: hidden;
-            }
-
-            .app-shell {
-                width: 100%;
-                min-height: 100dvh;
-                height: 100dvh;
-
-                overflow: hidden;
-
-                display: flex;
-                flex-direction: column;
-
-                position: relative;
-
-                background: white;
-            }
-                `}</style>
-            {gameState === 'intro' && (
-                <IntroPopup onStart={startGame} />
-            )}
-
-            {gameState === 'game1' && (
-                <Game1 onComplete={completeGame1} />
-            )}
-
-            {gameState === 'game2' && (
-                <Game2 onComplete={completeGame2} />
-            )}
-
-            {gameState === 'complete' && (
-                <FinalMessage />
-            )}
-        </div>
+        </main>
     );
 }
 
