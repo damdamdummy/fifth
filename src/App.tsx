@@ -288,11 +288,11 @@ function App() {
                                     <p className="text-black/50 text-sm lg:text-base leading-relaxed mb-1 max-w-md italic text-right ">
                                         "my mask speaks louder than my name."
                                     </p>
-                                    {/* <div className="flex flex-wrap gap-2 mb-10">
-                                        {['Of Age', 'INTJ 6w5', 'He/Him'].map((tag, i) => (
+                                    {/* <div className="flex flex-wrap gap-2 mb-1 flex items-center justify-center mt-2">
+                                        {['Of legal Age', 'INTJ 6w5', 'Low social battery'].map((tag, i) => (
                                             <span
                                                 key={tag}
-                                                className="px-2 py-1 border border-black/30 text-black/70 text-xs tracking-wider uppercase"
+                                                className="px-2 py-1 border border-black/20 text-black/60 text-xs tracking-wider lowercase"
                                                 style={{ animationDelay: `${i * 100}ms` }}
                                             >
                                                 {tag}
@@ -340,7 +340,7 @@ function App() {
                                     /> */}
 
                                     <p className="text-white/60 mt-12 text-xs tracking-[0.3em] uppercase mb-6">
-                                        leave a message below
+                                        got something to say?
                                     </p>
 
                                     <input
@@ -352,7 +352,7 @@ function App() {
                                         className="w-full border-b border-white/20 bg-transparent text-white text-sm py-2 mb-4 outline-none placeholder-white/20 focus:border-white/60 transition-colors"
                                     />
                                     <textarea
-                                        placeholder="say something..."
+                                        placeholder="your message"
                                         value={messageText}
                                         onChange={e => setMessageText(e.target.value)}
                                         maxLength={300}
