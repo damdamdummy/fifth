@@ -265,11 +265,11 @@ function App() {
                                                 backgroundSize: '4px 4px',
                                             }}
                                         />
-                                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                        {/* <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
                                             <svg width="120" height="120" viewBox="0 0 100 100" className="opacity-80">
                                                 <polygon points="50,5 61,40 98,40 68,62 79,98 50,75 21,98 32,62 2,40 39,40" fill="black" />
                                             </svg>
-                                        </div>
+                                        </div> */}
                                     </div>
                                 </div>
                             </div>
@@ -346,7 +346,7 @@ function App() {
                                         </svg>
                                     </div>
 
-                                    {/* Anonymous message form — tanpa clipPath, brush stroke yang jadi divider */}
+                                    {/* Anonymous message form  */}
                                     <div
                                         className="-mx-8 lg:-mx-10 -mb-8 lg:-mb-10 px-8 lg:px-10 pb-8 lg:pb-10 pt-4"
                                         style={{
@@ -433,7 +433,7 @@ function App() {
                                                 {msg.text}
                                             </p>
 
-                                            {/* Timestamp */}
+                                            {/* Timestamp — only visible to admin */}
                                             {isAdmin && (
                                                 <p className="text-white/20 text-xs mt-3">
                                                     {new Date(msg.timestamp).toLocaleDateString('en-US', {
