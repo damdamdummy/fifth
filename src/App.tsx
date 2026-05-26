@@ -283,9 +283,9 @@ function App() {
                                     }}
                                 >
 
-                                    <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-black mb-1 leading-tight text-right">ADAM</h1>
+                                    <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-black mt-0 mb-0 leading-tight text-right">ADAM</h1>
                                     {/* <div className="w-2 h-px bg-black mb-6" /> */}
-                                    <p className="text-black/50 text-sm lg:text-base leading-relaxed mb-8 max-w-md italic text-right ">
+                                    <p className="text-black/50 text-sm lg:text-base leading-relaxed mb-1 max-w-md italic text-right ">
                                         "my mask speaks louder than my name."
                                     </p>
                                     {/* <div className="flex flex-wrap gap-2 mb-10">
@@ -300,104 +300,82 @@ function App() {
                                         ))}
                                     </div> */}
 
-                                    {/* Brush stroke divider */}
-                                    <div className="-mx-8 lg:-mx-10 relative">
-                                        <svg
-                                            viewBox="0 0 400 30"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            className="w-full"
-                                            preserveAspectRatio="none"
+
+                                </div>
+
+
+                                {/* Brush stroke divider */}
+                                {/* <div className="relative -mt-1">
+                                    <svg viewBox="0 0 400 30" className="w-full" preserveAspectRatio="none">
+                                        <path
+                                            d="M0,18 C20,12 40,22 70,15 C100,8 130,20 160,14 C190,8 220,19 250,13 C280,7 310,18 340,12 C365,8 385,16 400,14 L400,30 L0,30 Z"
+                                            fill="#0a0a0a"
+                                        />
+                                        <path
+                                            d="M0,20 C15,16 30,24 55,17 C75,12 95,22 120,16 C145,10 165,21 190,15 C215,9 235,20 260,14 C285,8 305,19 330,13 C355,8 375,18 400,15"
+                                            fill="none"
+                                            stroke="#0a0a0a"
+                                            strokeWidth="6"
+                                            strokeLinecap="round"
+                                        />
+                                        <path d="M60,14 C62,10 64,8 63,12" fill="none" stroke="#0a0a0a" strokeWidth="2" strokeLinecap="round" />
+                                        <path d="M180,12 C183,7 185,5 184,10" fill="none" stroke="#0a0a0a" strokeWidth="1.5" strokeLinecap="round" />
+                                        <path d="M310,11 C313,6 316,4 314,9" fill="none" stroke="#0a0a0a" strokeWidth="2" strokeLinecap="round" />
+                                    </svg>
+                                </div> */}
+
+                                {/* Anonymous message form  */}
+                                <div
+                                    className="px-8 lg:px-10 pb-8 lg:pb-10 pt-4 -mt-5"
+                                    style={{
+                                        backgroundColor: '#0a0a0a',
+                                        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+                                        backgroundBlendMode: 'overlay',
+                                    }}
+                                >
+                                    {/* <img
+                                        src="assets/spiderweb2.png"
+                                        alt="decor"
+                                        className="block -mt-2 mx-auto mb-4 w-14 h-14 opacity-80"
+                                    /> */}
+
+                                    <p className="text-white/60 mt-12 text-xs tracking-[0.3em] uppercase mb-6">
+                                        leave a message below
+                                    </p>
+
+                                    <input
+                                        type="text"
+                                        placeholder="your name (optional)"
+                                        value={senderName}
+                                        onChange={e => setSenderName(e.target.value)}
+                                        maxLength={40}
+                                        className="w-full border-b border-white/20 bg-transparent text-white text-sm py-2 mb-4 outline-none placeholder-white/20 focus:border-white/60 transition-colors"
+                                    />
+                                    <textarea
+                                        placeholder="say something..."
+                                        value={messageText}
+                                        onChange={e => setMessageText(e.target.value)}
+                                        maxLength={300}
+                                        rows={3}
+                                        className="w-full border-b border-white/20 bg-transparent text-white text-sm py-2 mb-6 outline-none placeholder-white/20 focus:border-white/60 transition-colors resize-none"
+                                    />
+
+                                    <div className="flex items-center justify-between">
+                                        <button
+                                            onClick={handleSend}
+                                            disabled={sending || !messageText.trim()}
+                                            className="px-6 py-2 bg-white text-black text-xs tracking-widest uppercase hover:bg-white/80 transition-colors disabled:opacity-30"
                                         >
-                                            {/* Layer 1 - main thick brush */}
-                                            <path
-                                                d="M0,18 C20,12 40,22 70,15 C100,8 130,20 160,14 C190,8 220,19 250,13 C280,7 310,18 340,12 C365,8 385,16 400,14 L400,30 L0,30 Z"
-                                                fill="#0a0a0a"
-                                            />
-                                            {/* Layer 2 - rough top edge texture */}
-                                            <path
-                                                d="M0,20 C15,16 30,24 55,17 C75,12 95,22 120,16 C145,10 165,21 190,15 C215,9 235,20 260,14 C285,8 305,19 330,13 C355,8 375,18 400,15"
-                                                fill="none"
-                                                stroke="#0a0a0a"
-                                                strokeWidth="6"
-                                                strokeLinecap="round"
-                                            />
-                                            {/* Layer 3 - splatter/drip accents */}
-                                            <path
-                                                d="M60,14 C62,10 64,8 63,12"
-                                                fill="none"
-                                                stroke="#0a0a0a"
-                                                strokeWidth="2"
-                                                strokeLinecap="round"
-                                            />
-                                            <path
-                                                d="M180,12 C183,7 185,5 184,10"
-                                                fill="none"
-                                                stroke="#0a0a0a"
-                                                strokeWidth="1.5"
-                                                strokeLinecap="round"
-                                            />
-                                            <path
-                                                d="M310,11 C313,6 316,4 314,9"
-                                                fill="none"
-                                                stroke="#0a0a0a"
-                                                strokeWidth="2"
-                                                strokeLinecap="round"
-                                            />
-                                        </svg>
-                                    </div>
-
-                                    {/* Anonymous message form  */}
-                                    <div
-                                        className="-mx-8 lg:-mx-10 -mb-8 lg:-mb-10 px-8 lg:px-10 pb-8 lg:pb-10 pt-4"
-                                        style={{
-                                            backgroundColor: '#0a0a0a',
-                                            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                                            backgroundBlendMode: 'overlay',
-                                        }}
-                                    >
-                                        {/* <img
-                                            src="assets/spiderweb2.png"
-                                            alt="decor"
-                                            className="block mx-auto mb-4 w-14 h-14 opacity-80"
-                                        /> */}
-
-                                        <p className="text-white/60 text-xs tracking-[0.3em] uppercase mb-6">
-                                            leave a message below
-                                        </p>
-
-                                        <input
-                                            type="text"
-                                            placeholder="your name (optional)"
-                                            value={senderName}
-                                            onChange={e => setSenderName(e.target.value)}
-                                            maxLength={40}
-                                            className="w-full border-b border-white/20 bg-transparent text-white text-sm py-2 mb-4 outline-none placeholder-white/20 focus:border-white/60 transition-colors"
-                                        />
-                                        <textarea
-                                            placeholder="say something..."
-                                            value={messageText}
-                                            onChange={e => setMessageText(e.target.value)}
-                                            maxLength={300}
-                                            rows={3}
-                                            className="w-full border-b border-white/20 bg-transparent text-white text-sm py-2 mb-6 outline-none placeholder-white/20 focus:border-white/60 transition-colors resize-none"
-                                        />
-
-                                        <div className="flex items-center justify-between">
-                                            <button
-                                                onClick={handleSend}
-                                                disabled={sending || !messageText.trim()}
-                                                className="px-6 py-2 bg-white text-black text-xs tracking-widest uppercase hover:bg-white/80 transition-colors disabled:opacity-30"
-                                            >
-                                                {sending ? "sending..." : "send"}
-                                            </button>
-                                            {sent && (
-                                                <span className="text-white/30 text-xs tracking-wider animate-pulse">
-                                                    message sent ✓
-                                                </span>
-                                            )}
-                                        </div>
+                                            {sending ? "sending..." : "send"}
+                                        </button>
+                                        {sent && (
+                                            <span className="text-white/30 text-xs tracking-wider animate-pulse">
+                                                message sent ✓
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
+
                             </div>
                         </div>
 
