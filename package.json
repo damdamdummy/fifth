@@ -1,5 +1,5 @@
 {
-    "name": "fifth-month",
+    "name": "adam",
     "private": true,
     "version": "0.0.0",
     "type": "module",
@@ -41,5 +41,5 @@
         "typescript": "~5.8.3",
         "vite": "^7.0.0"
     },
-    "homepage": "https://damdamdummy.github.io/fifth"
+    "homepage": "https://damdamdummy.github.io/mada"
 }
