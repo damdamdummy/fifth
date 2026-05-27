@@ -364,10 +364,10 @@ function App() {
                                                 </p>
                                                 <div className="flex items-center justify-between mt-3">
                                                     <p className="text-white/20 text-xs">
-                                                        {new Date(msg.timestamp).toLocaleDateString('en-US', {
-                                                            month: 'short', day: 'numeric',
-                                                            hour: '2-digit', minute: '2-digit'
-                                                        })}
+                                                        {(() => {
+                                                            const d = new Date(msg.timestamp);
+                                                            return `${d.getDate()} ${d.toLocaleString('en-US', { month: 'short' })} ${d.getFullYear()} · ${d.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+                                                        })()}
                                                     </p>
                                                     {/* Reply button — only visible to admin */}
                                                     {isAdmin && (
