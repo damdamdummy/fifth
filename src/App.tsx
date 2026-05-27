@@ -283,7 +283,7 @@ function App() {
                                 </div>
 
                                 {/* Brush stroke divider — outside clipPath so it renders fully */}
-                                <div className="relative -mt-1">
+                                {/* <div className="relative -mt-1">
                                     <svg viewBox="0 0 400 30" className="w-full" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M0,18 C20,12 40,22 70,15 C100,8 130,20 160,14 C190,8 220,19 250,13 C280,7 310,18 340,12 C365,8 385,16 400,14 L400,30 L0,30 Z" fill="#0a0a0a" />
                                         <path d="M0,20 C15,16 30,24 55,17 C75,12 95,22 120,16 C145,10 165,21 190,15 C215,9 235,20 260,14 C285,8 305,19 330,13 C355,8 375,18 400,15" fill="none" stroke="#0a0a0a" strokeWidth="6" strokeLinecap="round" />
@@ -291,7 +291,7 @@ function App() {
                                         <path d="M180,12 C183,7 185,5 184,10" fill="none" stroke="#0a0a0a" strokeWidth="1.5" strokeLinecap="round" />
                                         <path d="M310,11 C313,6 316,4 314,9" fill="none" stroke="#0a0a0a" strokeWidth="2" strokeLinecap="round" />
                                     </svg>
-                                </div>
+                                </div> */}
 
                                 {/* Anonymous message form */}
                                 <div
